@@ -1,0 +1,29 @@
+{
+  "name": "feature",
+  "version": "1.0.0",
+  "description": "记录常见功能的代码库",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moyoha/Feature.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/moyoha/Feature/issues"
+  },
+  "homepage": "https://github.com/moyoha/Feature#readme",
+  "dependencies": {
+    "@koa/cors": "^5.0.0",
+    "@koa/multer": "^3.0.2",
+    "@koa/router": "^12.0.1",
+    "form-data": "^4.0.0",
+    "fs-extra": "^11.2.0",
+    "koa": "^2.15.1",
+    "koa-static": "^5.0.0",
+    "multer": "^1.4.5-lts.1"
+  }
+}
