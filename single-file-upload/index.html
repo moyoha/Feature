@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Single File Upload</title>
+</head>
+<body>
+    <input type="file" id="uploadFile">
+    <button onclick="uploadFile()">Upload</button>
+</body>
+<script>
+    const uploadFileEle = document.querySelector("#uploadFile");
+
+    async function uploadFile() {
+        if (!uploadFileEle.files.length) {
+            alert("请选择上传文件")
+            return
+        };
+        console.log(uploadFileEle.files);
+        const file = uploadFileEle.files[0]; // 获取单个文件
+        // 省略文件的校验过程，比如文件类型、大小校验
+        upload({
+            url: "/single",
+            file
+        });
+    }
+
+    function upload({ url, file, fieldName = "file" }) {
+        let formData = new FormData();
+        formData.append(fieldName, file);
+        fetch("http://localhost:3000/upload/single", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(res => {
+                console.log(res);
+            })
+        }
+</script>
+</html>
