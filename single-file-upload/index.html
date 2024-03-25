@@ -6,7 +6,7 @@
     <title>Single File Upload</title>
 </head>
 <body>
-    <input type="file" id="uploadFile">
+    <input type="file" accept="image/*" id="uploadFile">
     <button onclick="uploadFile()">Upload</button>
 </body>
 <script>
@@ -21,7 +21,7 @@
         const file = uploadFileEle.files[0]; // 获取单个文件
         // 省略文件的校验过程，比如文件类型、大小校验
         upload({
-            url: "/single",
+            url: "/upload/single",
             file
         });
     }
@@ -29,7 +29,7 @@
     function upload({ url, file, fieldName = "file" }) {
         let formData = new FormData();
         formData.append(fieldName, file);
-        fetch("http://localhost:3000/upload/single", {
+        fetch(`http://localhost:3000${url}`, {
                 method: "POST",
                 body: formData
             })
