@@ -1,0 +1,15 @@
+POST http://localhost:3000/upload/directory
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="imgs@girl_and_cat.jpg"
+Content-Type: image/*
+
+< ./imgs/girl_and_cat.jpg
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="imgs@02.jpg"
+Content-Type: image/*
+
+< ./imgs/02.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
