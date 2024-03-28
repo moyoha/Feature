@@ -30,6 +30,7 @@
     </style>
 </head>
 <body>
+    <img src="../imgs/02.jpg" alt="">
     <div id="dropArea">
         <p>拖拽上传文件</p>
         <div id="imagePreview"></div>
@@ -72,9 +73,18 @@
 
     dropAreaEle.addEventListener("drop", handleDrop);
 
+    // DataTransfer: https://developer.mozilla.org/zh-CN/docs/Web/API/DataTransfer
+    // Drag and Drop: https://developer.mozilla.org/zh-CN/docs/Web/API/HTML_Drag_and_Drop_API
     function handleDrop(e) {
         const dt = e.dataTransfer;
         const files = [...dt.files];
+        const types = dt.types
+
+        // 防止拖拽非文件类型
+        if(types && !types.includes('Files')) {
+            alert('只能上传文件')
+            return
+        }
         files.forEach((file) => {
             previewImage(file, imgPreviewEle);
         });
