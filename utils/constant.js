@@ -1,0 +1,1 @@
+module.exports.UPLOAD_PATH = '../../public/upload'

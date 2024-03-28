@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag Upload</title>
+    <style>
+        #dropArea {
+            width: 300px;
+            height: 300px;
+            border: 1px dashed gray;
+            margin-bottom: 20px;
+        }
+        #dropArea p {
+            text-align: center;
+            color: #999;
+        }
+        #dropArea.highlighted {
+            background-color: #ddd;
+        }
+        #imagePreview {
+            max-height: 250px;
+            overflow-y: scroll;
+        }
+        #imagePreview img {
+            width: 100%;
+            display: block;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="dropArea">
+        <p>拖拽上传文件</p>
+        <div id="imagePreview"></div>
+     </div>     
+</body>
+
+<script>
+    const dropAreaEle = document.querySelector("#dropArea");
+    const imgPreviewEle = document.querySelector("#imagePreview");
+    const IMAGE_MIME_REGEX = /^image\/(jpe?g|gif|png)$/i;
+
+    // 阻止浏览器默认事件
+    ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+        dropAreaEle.addEventListener(eventName, preventDefaults);
+        document.body.addEventListener(eventName, preventDefaults);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // 添加高亮样式
+    ["dragenter", "dragover"].forEach((eventName) => {
+        dropAreaEle.addEventListener(eventName, highlight);
+    });
+
+    // 移除高亮样式
+    ["dragleave", "drop"].forEach((eventName) => {
+        dropAreaEle.addEventListener(eventName, unhighlight);
+    });
+
+    function highlight() {
+        dropAreaEle.classList.add("highlighted");
+    }
+
+    function unhighlight() {
+        dropAreaEle.classList.remove("highlighted");
+    }
+
+    dropAreaEle.addEventListener("drop", handleDrop);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = [...dt.files];
+        files.forEach((file) => {
+            previewImage(file, imgPreviewEle);
+        });
+        files.forEach((file) => {
+            upload({ url: "/upload/single", file });
+        });
+    }
+
+    function previewImage(file, container) {
+        if (IMAGE_MIME_REGEX.test(file.type)) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+
+            reader.onload = function (e) {
+                let img = document.createElement("img");
+                img.src = e.target.result;
+                container.append(img);
+            };
+        }
+    }
+
+    function upload({ url, file, fieldName = "file" }) {
+      let formData = new FormData();
+      formData.append(fieldName, file);
+      fetch(`http://localhost:3000${url}`, {
+              method: "POST",
+              body: formData
+          })
+          .then(res => res.json())
+          .then(res => {
+              console.log(res);
+          })
+      }
+</script>
+
+</html>

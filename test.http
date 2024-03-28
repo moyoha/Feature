@@ -1,3 +1,0 @@
-POST http://localhost:3000/upload/single
-
-< ./02.jpg
