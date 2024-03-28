@@ -42,7 +42,7 @@
     const imgPreviewEle = document.querySelector("#imagePreview");
     const IMAGE_MIME_REGEX = /^image\/(jpe?g|gif|png)$/i;
 
-    // 阻止浏览器默认事件
+    // 阻止浏览器默认事件，因为默认情况下普通元素是不允许有东西拖拽到其上面的
     ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
         dropAreaEle.addEventListener(eventName, preventDefaults);
         document.body.addEventListener(eventName, preventDefaults);
