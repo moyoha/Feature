@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clipboard Upload</title>
+  <style>
+    #uploadArea {
+      width: 400px;
+      height: 400px;
+      border: 1px dashed gray;
+      display: table-cell;
+      vertical-align: middle;
+    }
+    #uploadArea p {
+      text-align: center;
+      color: #999;
+    }
+    #uploadArea img {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+      margin: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="uploadArea">
+    <p>请先复制图片后再执行粘贴操作</p>
+ </div> 
+ <button onclick="uploadFile()">Upload</button>
+</body>
+<script>
+  const IMAGE_MIME_REGEX = /^image\/(jpe?g|gif|png)$/i;
+  const uploadAreaEle = document.querySelector("#uploadArea");
+  let files = [];
+
+  uploadAreaEle.addEventListener("paste", async (e) => {
+    e.preventDefault();
+    if (navigator.clipboard) {
+      let clipboardItems = await navigator.clipboard.read();
+      console.log(clipboardItems)
+      for (const clipboardItem of clipboardItems) {
+        for (const type of clipboardItem.types) {
+          if (IMAGE_MIME_REGEX.test(type)) {
+            // 获取对应 MIME 类型的 Blob 数据
+            const blob = await clipboardItem.getType(type);
+            previewImage(blob, uploadAreaEle);
+            const fileName = generateName(type)
+            files.push({ blob, fileName});
+          }
+        }
+      }
+    } else {
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+          if (IMAGE_MIME_REGEX.test(items[i].type)) {
+            let file = items[i].getAsFile();
+            previewImage(file, uploadAreaEle);
+            const fileName = generateName(type)
+            files.push({ blob, fileName});
+          }
+        }
+    }
+  });
+
+  // 预览图片常见的两种写法
+  // function previewImage(file, container) {
+  //   const reader = new FileReader();
+  //   reader.onload = function (e) {
+  //     let img = document.createElement("img");
+  //     img.src = e.target.result;
+  //     container.append(img);
+  //   };
+  //   reader.readAsDataURL(file);
+  // }
+
+  function previewImage(file, container) {
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file)
+    container.append(img);
+  }
+
+  function upload({ url, files, fieldName = "file" }) {
+    let formData = new FormData();
+
+    files.forEach((file) => {
+      formData.append(fieldName, file.blob, file.fileName);
+    });
+
+    fetch(`http://localhost:3000${url}`, { method: "POST", body: formData })
+      .then(res => res.json())
+      .then(res => {
+          console.log(res);
+      })
+  }
+
+  function uploadFile() {
+    upload({ url: "/upload/multiple", files })
+    files = []
+  }
+
+  function generateName(mimeType) {
+    const suffix = mimeType.split('/')[1]
+    return `${Date.now()}${Math.random() * 10000}.${suffix}`
+  }
+</script>
+</html>

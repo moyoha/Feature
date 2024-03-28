@@ -12,7 +12,7 @@
 <script>
   const uploadFileEle = document.querySelector("#uploadFile");
 
-  async function uploadFile() {
+  function uploadFile() {
       if (!uploadFileEle.files.length) {
           alert("请选择上传文件")
           return
@@ -20,25 +20,21 @@
       console.log(uploadFileEle.files);
       const files = Array.from(uploadFileEle.files); // 获取所有文件
       // 省略文件的校验过程，比如文件类型、大小校验
-      upload({
-          url: "/upload/multiple",
-          files
-      });
+      upload({ url: "/upload/multiple", files });
   }
 
   function upload({ url, files, fieldName = "file" }) {
-      let formData = new FormData();
-      files.forEach((file) => {
-        formData.append(fieldName, file);
-      });
-      fetch(`http://localhost:3000${url}`, {
-              method: "POST",
-              body: formData
-          })
-          .then(res => res.json())
-          .then(res => {
-              console.log(res);
-          })
-      }
+    let formData = new FormData();
+
+    files.forEach((file) => {
+      formData.append(fieldName, file);
+    });
+
+    fetch(`http://localhost:3000${url}`, { method: "POST", body: formData })
+      .then(res => res.json())
+      .then(res => {
+          console.log(res);
+      })
+  }
 </script>
 </html>
