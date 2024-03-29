@@ -20,10 +20,7 @@
         console.log(uploadFileEle.files);
         const file = uploadFileEle.files[0]; // 获取单个文件
         // 省略文件的校验过程，比如文件类型、大小校验
-        upload({
-            url: "/upload/single",
-            file
-        });
+        upload({ url: "/upload/single", file });
     }
 
     function upload({ url, file, fieldName = "file" }) {

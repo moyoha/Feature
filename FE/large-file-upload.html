@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Large File Upload</title>
+  <!-- https://github.com/satazor/js-spark-md5#readme -->
+  <script src="https://cdn.bootcdn.net/ajax/libs/spark-md5/3.0.0/spark-md5.min.js"></script>
+</head>
+<body>
+  <input type="file" accept="image/*" id="uploadFile">
+  <button onclick="uploadFile()">Upload</button>
+</body>
+<script>
+  const uploadFileEle = document.querySelector("#uploadFile");
+
+  async function uploadFile() {
+    if (!uploadFileEle.files.length) return;
+    const file = uploadFileEle.files[0]; // 获取待上传的文件
+    const fileMd5 = await calcFileMD5(file); // 计算文件的MD5
+    const fileStatus = await checkFileExist("/upload/exists", file.name, fileMd5 ); // 判断文件是否已存在
+
+    console.log(fileStatus)
+    if (fileStatus && fileStatus.isExists) {
+      alert("文件已上传[秒传]");
+      return;
+    }
+
+    await upload({
+      url: "/upload/single",
+      file, // 文件对象
+      fileMd5, // 文件MD5值
+      fileSize: file.size, // 文件大小
+      chunkSize: 1 * 1024 * 1024, // 分块大小
+      chunkIds: fileStatus.chunkIds, // 已上传的分块列表
+      poolLimit: 3, // 限制的并发数
+    });
+
+    await concatFiles("/upload/concatFiles", file.name, fileMd5);
+  }
+
+  // 计算文件的 MD5 值
+  // 计算文件的 MD5 值时分块的好处：
+  // 减少内存占用：对于大型文件，一次性读取整个文件可能会消耗大量的内存。通过分块读取，可以降低内存占用，因为每次只需读取一小部分文件内容并计算其 MD5 值。
+  // 提高性能：分块处理可以提高计算效率。大文件的 MD5 计算可能会耗费很长时间，通过分块计算可以并行处理不同部分，从而加快整个计算过程。
+  // 处理大文件：对于非常大的文件，一次性读取并计算其 MD5 值可能会导致性能问题或者内存溢出。通过分块处理，可以更好地处理大文件，并降低计算时出现问题的可能性。
+  function calcFileMD5(file) {
+    return new Promise((resolve, reject) => {
+      let chunkSize = 2097152, // 2M
+        chunks = Math.ceil(file.size / chunkSize),
+        currentChunk = 0,
+        spark = new SparkMD5.ArrayBuffer(),
+        fileReader = new FileReader();
+
+      fileReader.onload = (e) => {
+        spark.append(e.target.result);
+        currentChunk++;
+        if (currentChunk < chunks) {
+          loadNext();
+        } else {
+          resolve(spark.end());
+        }
+      };
+
+      fileReader.onerror = (e) => {
+        reject(fileReader.error);
+        reader.abort();
+      };
+
+      function loadNext() {
+        const start = currentChunk * chunkSize
+        const end = start + chunkSize >= file.size ? file.size : start + chunkSize;
+        fileReader.readAsArrayBuffer(file.slice(start, end));
+      }
+
+      loadNext();
+    });
+  }
+
+  // 并发任务控制
+  async function asyncPool(poolLimit, array, iteratorFn) {
+    const ret = []; // 存储所有的异步任务
+    const executing = []; // 存储正在执行的异步任务
+    for (const item of array) {
+      // 调用iteratorFn函数创建异步任务
+      const p = Promise.resolve().then(() => iteratorFn(item, array));
+      ret.push(p); // 保存新的异步任务
+
+      // 当poolLimit值小于或等于总任务个数时，进行并发控制
+      if (poolLimit <= array.length) {
+        // 当任务完成后，从正在执行的任务数组中移除已完成的任务
+        const e = p.then(() => executing.splice(executing.indexOf(e), 1));
+        executing.push(e); // 保存正在执行的异步任务
+        if (executing.length >= poolLimit) {
+          await Promise.race(executing); // 等待较快的任务执行完成
+        }
+      }
+    }
+    return Promise.all(ret);
+  }
+
+  function upload({ url, file, fileMd5, fileSize, chunkSize, chunkIds, poolLimit = 1 }) {
+    const chunks = typeof chunkSize === "number" ? Math.ceil(fileSize / chunkSize) : 1;
+    
+    return asyncPool(poolLimit, [...new Array(chunks).keys()], (i) => {
+      if (chunkIds.indexOf(i + "") !== -1) { // 已上传的分块直接跳过
+        return Promise.resolve();
+      }
+      let start = i * chunkSize;
+      let end = i + 1 == chunks ? fileSize : (i + 1) * chunkSize;
+      const chunk = file.slice(start, end); // 对文件进行切割
+      return uploadChunk({
+        url,
+        chunk,
+        chunkIndex: i,
+        fileMd5,
+        fileName: file.name,
+      });
+    });
+  }
+
+  // 上传分割好的文件
+  function uploadChunk({ url, chunk, chunkIndex, fileMd5, fileName }) {
+    const formData = new FormData();
+    formData.set("file", chunk, `${fileMd5}-${chunkIndex}`);
+    formData.set("name", fileName);
+    formData.set("timestamp", Date.now());
+
+    return fetch(`http://localhost:3000${url}`, { method: "POST", body: formData });
+  }
+
+  // 检测文件是否存在
+  function checkFileExist(url, name, md5) {
+    return fetch(`http://localhost:3000${url}?name=${name}&md5=${md5}`)
+      .then(res => res.json())
+      .then(response => response.data);
+  }
+
+  // 通知服务器拼接文件
+  function concatFiles(url, name, md5) {
+    return fetch(`http://localhost:3000${url}?name=${name}&md5=${md5}`)
+      .then(res => res.json())
+      .then((response) => response.data);
+  }
+</script>
+</html>
