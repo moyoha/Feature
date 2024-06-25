@@ -24,8 +24,6 @@
     return new Promise((resolve, reject) => {
       const video = document.createElement('video');
       video.currentTime = time;
-      video.muted = true;
-      video.autoplay = true;
       const url = URL.createObjectURL(file);
       video.src = url;
       video.addEventListener('canplay', () => {
