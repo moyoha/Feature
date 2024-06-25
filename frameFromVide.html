@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>从视频提取画面帧</title>
+</head>
+<body>
+  <input type="file" id="aVideo">
+</body>
+<script>
+  const video = document.getElementById('aVideo');
+
+  video.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    captureFrame(file, 10).then(({url, blob}) => {
+      const img = document.createElement('img');
+      img.src = url;
+      document.body.appendChild(img);
+    })
+  })
+
+  function captureFrame(file, time) {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.currentTime = time;
+      video.muted = true;
+      video.autoplay = true;
+      const url = URL.createObjectURL(file);
+      video.src = url;
+      video.addEventListener('canplay', () => {
+        const cvs = document.createElement('canvas');
+        cvs.width = video.videoWidth;
+        cvs.height = video.videoHeight;
+        const ctx = cvs.getContext('2d');
+        ctx.drawImage(video, 0, 0, cvs.width, cvs.height);
+        cvs.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          resolve({
+            url,
+            blob
+          });
+        })
+      })
+    })
+  }
+</script>
+</html>
