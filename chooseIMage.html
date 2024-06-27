@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>四角线框的跟随移动</title>
+  <!-- 参考 -->
+  <!-- https://www.douyin.com/user/self?modal_id=7379543201893321994 -->
+  <style>
+    body {
+      background-color: #000;
+    }
+    .container {
+      position: relative;
+      display: inline-grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(2, 100px);
+      gap: 40px;
+      margin: 40px;
+    }
+    img {
+      width: 100px;
+      height: 100px;
+    }
+    .pointer {
+      --line-length: 30px; /* 四角线框的长度 */
+      --line-width: 3px; /* 四角线框的宽度 */
+      --line-gap: 10px; /* 四角线框的间隙 */
+      --image-wdith: 100px; /* 图片的宽度 */
+      --image-height: 100px; /* 图片的高度 */
+      --image-x: 0px; /* 图片的横坐标 */
+      --image-y: 0px; /* 图片的纵坐标 */
+      position: absolute;
+      left: calc(var(--image-x) - var(--line-gap));
+      top: calc(var(--image-y) - var(--line-gap));
+      width: calc(var(--image-wdith) + var(--line-gap) * 2);
+      height: calc(var(--image-height) + var(--line-gap) * 2);
+      border: var(--line-width) solid #fff;
+      transition: all 0.2s;
+      mask: conic-gradient(at var(--line-length) var(--line-length), transparent 75%, blue 75% 100%) 0  0 /
+      calc(100% - var(--line-length)) calc(100% - var(--line-length)) repeat;
+      /* background: conic-gradient(at var(--line-length) var(--line-length), transparent 75%, blue 75% 100%) 0  0 /
+      calc(100% - var(--line-length)) calc(100% - var(--line-length)) repeat; */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="pointer"></div>
+    <div class="item">
+      <img src="./assets/imgs/1.jpeg">
+    </div>
+    <div class="item">
+      <img src="./assets/imgs/2.jpeg">
+    </div>
+    <div class="item">
+      <img src="./assets/imgs/3.jpeg">
+    </div>
+    <div class="item">
+      <img src="./assets/imgs/4.jpeg">
+    </div>
+    <div class="item">
+      <img src="./assets/imgs/5.jpeg">
+    </div>
+    <div class="item">
+      <img src="./assets/imgs/6.jpeg">
+    </div>
+  </div>
+</body>
+<script>
+  const imgs = document.querySelectorAll('img')
+  const pointer = document.querySelector('.pointer')
+
+  imgs.forEach((img) => {
+    img.addEventListener('mouseenter', (e) => {
+      pointer.style.setProperty('--image-width', `${img.offsetWidth}px`)
+      pointer.style.setProperty('--image-height', `${img.offsetHeight}px`)
+      pointer.style.setProperty('--image-x', `${img.offsetLeft}px`)
+      pointer.style.setProperty('--image-y', `${img.offsetTop}px`)
+    })
+  })
+</script>
+</html>
