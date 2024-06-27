@@ -20,7 +20,7 @@
     }
     img {
       width: 100px;
-      height: 100px;
+      /* height: 100px; */
     }
     .pointer {
       --line-length: 30px; /* 四角线框的长度 */
@@ -30,6 +30,7 @@
       --image-height: 100px; /* 图片的高度 */
       --image-x: 0px; /* 图片的横坐标 */
       --image-y: 0px; /* 图片的纵坐标 */
+      box-sizing: border-box;
       position: absolute;
       left: calc(var(--image-x) - var(--line-gap));
       top: calc(var(--image-y) - var(--line-gap));
