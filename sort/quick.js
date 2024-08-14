@@ -1,3 +1,4 @@
+"use strict"
 // 双边循环法
 function quick(arr, startIndex, endIndex) {
   if(startIndex >= endIndex) {

@@ -1,3 +1,4 @@
+"use strict"
 // 冒泡排序
 function bubble(arr) {
   const len = arr.length;

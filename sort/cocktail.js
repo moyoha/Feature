@@ -1,3 +1,4 @@
+"use strict"
 // 鸡尾酒排序
 function cocktail(arr) {
   const len = arr.length;
