@@ -237,13 +237,8 @@ class ZoomAndDrag {
     this.target.addEventListener("mousedown", (e) => {
       this.getInfo(e)
       document.onmousemove = (e) => {
-        if(this.options.limit){
-          this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
-          this.newTy = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height))
-        }else{
-          this.newTx = this.tx + e.clientX - this.startX
-          this.newTy = this.ty + e.clientY - this.startY
-        }
+        this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
+        this.newTy = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height))
         this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`
       }
       document.onmouseup = () => {
@@ -343,6 +338,9 @@ class ZoomAndDrag {
     this.newWidth = this.width + (e.clientX - this.startX)
 
     this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.pWidth - this.tx))
+    if(this.options.square) {
+
+    }
   }
 
   // 向上进行缩放操作
