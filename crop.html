@@ -5,15 +5,98 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>图片裁剪</title>
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    /* 四个角的样式 start */
+    .horn {
+      width: 8px;
+      height: 8px;
+      background-color: #fff;
+      position: absolute;
+      border: 1px solid #dbdbdb;
+      border-radius: 50%;
+    }
+    .leftTop {
+      cursor: nw-resize;
+      left: -4px;
+      top: -4px;
+    }
+
+    .rightTop {
+      cursor: ne-resize;
+      right: -4px;
+      top: -4px;
+    }
+
+    .leftBottom {
+      cursor: sw-resize;
+      bottom: -4px;
+      left: -4px;
+    }
+
+    .rightBottom {
+      cursor: se-resize;
+      right: -4px;
+      bottom: -4px;
+    }
+    /* 四个角的样式 end */
+
+    /* 左右两侧样式 start */
+    .vertical {
+      width: 6px;
+      height: 12px;
+      position: absolute;
+      background-color: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 3px;
+      cursor: col-resize;
+    }
+    .left {
+      top: calc(50% - 6px);
+      left: -3px;
+    }
+    .right {
+      top: calc(50% - 6px);
+      right: -3px;
+    }
+    /* 左右两侧样式 end */
+    /* 上下两侧样式 start */
+    .horizontal {
+      width: 12px;
+      height: 6px;
+      position: absolute;
+      background-color: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 3px;
+      cursor: row-resize;
+    }
+    .top {
+      top: -3px;
+      left: calc(50% - 6px);
+    }
+    
+    .bottom {
+      left: calc(50% - 6px);
+      bottom: -3px;
+    }
+    /* 上下两侧样式 end */
+    
+  </style>
+  <style>
     .cut-container {
       position: relative;
       width: fit-content;
       height: fit-content;
+      user-select: none;
+      font-size: 0;
     }
     #select-box {
       width: 100px;
       height: 100px;
-      border: 1px dashed #000;
+      border: 1px solid #5864f6;
       position: absolute;
       display: none;
       cursor: move;
@@ -26,7 +109,7 @@
 </head>
 <body>
   <div class="cut-container">
-    <img src="https://picsum.photos/200/300" crossorigin="anonymous">
+    <img src="./assets/imgs/6.jpeg" crossorigin="anonymous">
     <div id="select-box"></div>
   </div>
   <canvas width="200" height="200"></canvas>
@@ -45,7 +128,8 @@
     // 把区域选择框放到 img 上
     selectBox.style.top = img.offsetTop + 'px';
     selectBox.style.left = img.offsetLeft + 'px';
-    new Zoom(selectBox)
+    // new Zoom(selectBox)
+    new ZoomAndDrag(selectBox)
   });
 
 
@@ -69,65 +153,30 @@ cropBtn.addEventListener('click', () => {
 });
 
 
+/** 注意事项 
+ * 1. 目标元素若存在外边距，那么目标元素在移动时会超出父元素(定位同理)
+ * 2. 父元素若存在内边距，那么目标元素在移动时也会超出父元素
+ */
 
-class Drag {
-      constructor(target, options = { limit: true }) {
-        this.target = target
-        this.options = options
-        this.init()
-      }
-      init(){
-        if(!this.target.style.transform) {
-          this.target.style.transform = "translate(0px,0px)"
-        }
-        this.getBoundary()
-        this.drag()
-      }
-      // 获取父元素的宽高
-      getBoundary() {
-        this.pWidth = this.target.parentNode.clientWidth
-        this.pHeight = this.target.parentNode.clientHeight
-        console.log(this.pWidth, this.pHeight)
-      }
-      // 获取目标元素的初始宽高、偏移以及鼠标的起始位置信息
-      getInfo(e) {
-        this.width = this.target.offsetWidth
-        this.height = this.target.offsetHeight
-
-        this.startX = e.clientX
-        this.startY = e.clientY
-
-        let translateStr = this.target.style.transform
-        const reg = /\d+/g
-        let translateArr = translateStr.match(reg)
-        this.tx = Number(translateArr[0])
-        this.ty = Number(translateArr[1])
-      }
-      // 拖动实现
-      drag() {
-        this.target.addEventListener("mousedown", (e) => {
-          this.getInfo(e)
-          document.onmousemove = (e) => {
-            if(this.options.limit){
-              this.distanceX = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
-              this.distanceY = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height))
-            }else{
-              this.distanceX = this.tx + e.clientX - this.startX
-              this.distanceY = this.ty + e.clientY - this.startY
-            }
-            this.target.style.transform = `translate(${this.distanceX}px, ${this.distanceY}px)`
-          }
-          document.onmouseup = () => {
-            document.onmousemove = null
-          }
-        })
-      }
-    }
-    
-class Zoom extends Drag {
-  constructor(target, options = { limit: true, minWidth: 0, minHeight: 0 }) {
-    super(target, options = { limit: true, minWidth: 50, minHeight: 50 })
+class ZoomAndDrag {
+  width = 0
+  height = 0
+  pWidth = 0
+  pHeight = 0
+  newWidth = 0
+  newHeight = 0
+  startX = 0
+  startY = 0
+  tx = 0
+  ty = 0
+  options = { limit: true, minWidth: 50, minHeight: 50 }
+  target = null
+  constructor(target, options = {}) {
+    this.target = target
+    this.options = { ...options, ...this.options }
+    this.init()
   }
+
   init(){
     this.target.style.position = "absolute"
     if(!this.target.style.transform) {
@@ -146,6 +195,82 @@ class Zoom extends Drag {
     this.zoom(this.rightTop,"rightTop")
     this.zoom(this.rightBottom,"rightBottom")
   }
+
+  // 获取目标元素的初始宽高、偏移以及鼠标的起始位置信息
+  getInfo(e) {
+    this.width = this.target.offsetWidth
+    this.height = this.target.offsetHeight
+    this.newWidth = this.width
+    this.newHeight = this.height
+
+    this.startX = e.clientX
+    this.startY = e.clientY
+
+    let translateStr = this.target.style.transform
+    const reg = /\d+/g
+    let translateArr = translateStr.match(reg)
+    this.tx = +translateArr[0]
+    this.ty = +translateArr[1]
+  }
+
+  // 获取父元素的宽高
+  getBoundary() {
+    this.pWidth = this.target.parentNode.clientWidth
+    this.pHeight = this.target.parentNode.clientHeight
+    console.log(this.pWidth, this.pHeight)
+  }
+
+  // 拖动实现
+  drag() {
+    this.target.addEventListener("mousedown", (e) => {
+      this.getInfo(e)
+      document.onmousemove = (e) => {
+        if(this.options.limit){
+          this.distanceX = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
+          this.distanceY = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height))
+        }else{
+          this.distanceX = this.tx + e.clientX - this.startX
+          this.distanceY = this.ty + e.clientY - this.startY
+        }
+        this.target.style.transform = `translate(${this.distanceX}px, ${this.distanceY}px)`
+      }
+      document.onmouseup = () => {
+        document.onmousemove = null
+      }
+    })
+  }
+
+  // 缩放实现
+  zoom(el, direction) {
+    el.addEventListener("mousedown", (e) => {
+      e.stopPropagation()
+      this.getInfo(e)
+      document.onmousemove = (e) => {
+        switch(direction) {
+          case "left": this.leftInfo(e); break;
+          case "right": this.rightInfo(e); break;
+          case "top": this.topInfo(e); break;
+          case "bottom": this.bottomInfo(e); break;
+          case "leftTop": this.leftTopInfo(e); break;
+          case "leftBottom": this.leftBottomInfo(e); break;
+          case "rightTop": this.rightTopInfo(e); break;
+          case "rightBottom": this.rightBottomInfo(e); break;
+        }
+        // 这里不能直接使用对this.newWidth隐式类型转换来判断，因为this.newWidth===0时，会使用this.width
+        let width = this.newWidth !== undefined ? this.newWidth : this.width
+        let height = this.newHeight !== undefined ? this.newHeight : this.height
+        let translateX = this.distanceX !== undefined ? this.distanceX : this.tx
+        let translateY = this.distanceY !== undefined ? this.distanceY : this.ty
+        this.target.style.width = `${width}px`
+        this.target.style.height = `${height}px`
+        this.target.style.transform = `translate(${translateX}px, ${translateY}px)`
+      }
+      document.onmouseup = () => {
+        document.onmousemove = null
+      }
+    })
+  }
+
   // 添加四个角
   addHorn() {
     this.leftTop = document.createElement("div")
@@ -161,6 +286,7 @@ class Zoom extends Drag {
     this.target.append(this.leftBottom)
     this.target.append(this.rightBottom)
   }
+
   // 添加四条边
   addBorder() {
     this.left = document.createElement("div")
@@ -176,6 +302,7 @@ class Zoom extends Drag {
     this.target.append(this.top)
     this.target.append(this.bottom)
   }
+
   // 获取缩放后的宽高、偏移等参数的值
   leftInfo(e) {
     this.newWidth = this.width - (e.clientX - this.startX)
@@ -221,41 +348,7 @@ class Zoom extends Drag {
     this.rightInfo(e)
     this.bottomInfo(e)
   }
-  // 缩放实现
-  zoom(el, direction) {
-    el.addEventListener("mousedown", (e) => {
-      e.stopPropagation()
-      this.getInfo(e)
-      document.onmousemove = (e) => {
-        switch(direction) {
-          case "left": this.leftInfo(e); break;
-          case "right": this.rightInfo(e); break;
-          case "top": this.topInfo(e); break;
-          case "bottom": this.bottomInfo(e); break;
-          case "leftTop": this.leftTopInfo(e); break;
-          case "leftBottom": this.leftBottomInfo(e); break;
-          case "rightTop": this.rightTopInfo(e); break;
-          case "rightBottom": this.rightBottomInfo(e); break;
-        }
-        // 这里不能直接使用对this.newWidth隐式类型转换来判断，因为this.newWidth===0时，会使用this.width
-        let width = this.newWidth !== undefined ? this.newWidth : this.width
-        let height = this.newHeight !== undefined ? this.newHeight : this.height
-        let translateX = this.distanceX !== undefined ? this.distanceX : this.tx
-        let translateY = this.distanceY !== undefined ? this.distanceY : this.ty
-        this.target.style.width = `${width}px`
-        this.target.style.height = `${height}px`
-        this.target.style.transform = `translate(${translateX}px, ${translateY}px)`
-      }
-      document.onmouseup = () => {
-        document.onmousemove = null
-      }
-    })
-  }
 }
-/** 注意事项 
- * 1. 目标元素若存在外边距，那么目标元素在移动时会超出父元素(定位同理)
- * 2. 父元素若存在内边距，那么目标元素在移动时也会超出父元素
- */
 
 </script>
 </html>
