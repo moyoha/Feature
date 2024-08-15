@@ -159,18 +159,21 @@ cropBtn.addEventListener('click', () => {
  */
 
 class ZoomAndDrag {
-  width = 0
-  height = 0
-  pWidth = 0
-  pHeight = 0
-  newWidth = 0
-  newHeight = 0
-  startX = 0
-  startY = 0
-  tx = 0
-  ty = 0
+  width = 0 // 目标元素宽度
+  height = 0 // 目标元素高度
+  pWidth = 0 // 目标父元素宽度
+  pHeight = 0 // 目标父元素高度
+  newWidth = 0 // 目标元素缩放后的宽度
+  newHeight = 0 // 目标元素缩放后的高度
+  startX = 0 // 鼠标起始位置的 X 坐标
+  startY = 0 // 鼠标起始位置的 Y 坐标
+  tx = 0 // 目标元素在 X 轴上的初始偏移
+  ty = 0 // 目标元素在 Y 轴上的初始偏移
+  newTx = 0 // 目标元素缩放、移动后在 X 轴上的偏移
+  newTy = 0 // 目标元素缩放、移动后在 Y 轴上的偏移
+  // 配置项，limit：是否限制在父元素内，minWidth：缩放的最小宽度，minHeight：缩放最小高度
   options = { limit: true, minWidth: 50, minHeight: 50 }
-  target = null
+  target = null // 目标元素
   constructor(target, options = {}) {
     this.target = target
     this.options = { ...options, ...this.options }
@@ -210,7 +213,9 @@ class ZoomAndDrag {
     const reg = /\d+/g
     let translateArr = translateStr.match(reg)
     this.tx = +translateArr[0]
+    this.newTx = this.tx
     this.ty = +translateArr[1]
+    this.newTy = this.ty
   }
 
   // 获取父元素的宽高
@@ -226,13 +231,13 @@ class ZoomAndDrag {
       this.getInfo(e)
       document.onmousemove = (e) => {
         if(this.options.limit){
-          this.distanceX = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
-          this.distanceY = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height))
+          this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
+          this.newTy = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height))
         }else{
-          this.distanceX = this.tx + e.clientX - this.startX
-          this.distanceY = this.ty + e.clientY - this.startY
+          this.newTx = this.tx + e.clientX - this.startX
+          this.newTy = this.ty + e.clientY - this.startY
         }
-        this.target.style.transform = `translate(${this.distanceX}px, ${this.distanceY}px)`
+        this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`
       }
       document.onmouseup = () => {
         document.onmousemove = null
@@ -256,14 +261,9 @@ class ZoomAndDrag {
           case "rightTop": this.rightTopInfo(e); break;
           case "rightBottom": this.rightBottomInfo(e); break;
         }
-        // 这里不能直接使用对this.newWidth隐式类型转换来判断，因为this.newWidth===0时，会使用this.width
-        let width = this.newWidth !== undefined ? this.newWidth : this.width
-        let height = this.newHeight !== undefined ? this.newHeight : this.height
-        let translateX = this.distanceX !== undefined ? this.distanceX : this.tx
-        let translateY = this.distanceY !== undefined ? this.distanceY : this.ty
-        this.target.style.width = `${width}px`
-        this.target.style.height = `${height}px`
-        this.target.style.transform = `translate(${translateX}px, ${translateY}px)`
+        this.target.style.width = `${this.newWidth}px`
+        this.target.style.height = `${this.newHeight}px`
+        this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`
       }
       document.onmouseup = () => {
         document.onmousemove = null
@@ -306,10 +306,10 @@ class ZoomAndDrag {
   // 获取缩放后的宽高、偏移等参数的值
   leftInfo(e) {
     this.newWidth = this.width - (e.clientX - this.startX)
-    this.distanceX = this.tx + (e.clientX - this.startX)
+    this.newTx = this.tx + (e.clientX - this.startX)
     if(this.options.limit) {
       this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.width + this.tx))
-      this.distanceX = Math.max(0, Math.min(this.distanceX, this.width + this.tx - this.options.minWidth))
+      this.newTx = Math.max(0, Math.min(this.newTx, this.width + this.tx - this.options.minWidth))
     }
   }
   rightInfo(e) {
@@ -320,10 +320,10 @@ class ZoomAndDrag {
   }
   topInfo(e) {
     this.newHeight = this.height - (e.clientY - this.startY)
-    this.distanceY = this.ty + (e.clientY - this.startY)
+    this.newTy = this.ty + (e.clientY - this.startY)
     if(this.options.limit) {
       this.newHeight = Math.max(this.options.minHeight, Math.min(this.newHeight, this.height + this.ty))
-      this.distanceY = Math.max(0, Math.min(this.distanceY, this.height + this.ty - this.options.minHeight))
+      this.newTy = Math.max(0, Math.min(this.newTy, this.height + this.ty - this.options.minHeight))
     }
   }
   bottomInfo(e) {
