@@ -159,8 +159,8 @@ class ZoomAndDrag {
   ty = 0 // 目标元素在 Y 轴上的初始偏移
   newTx = 0 // 目标元素缩放、移动后在 X 轴上的偏移
   newTy = 0 // 目标元素缩放、移动后在 Y 轴上的偏移
-  // 配置项，limit：是否限制在父元素内，minWidth：缩放的最小宽度，minHeight：缩放最小高度，squre: 缩放后是否保持宽高比
-  options = { limit: true, minWidth: 50, minHeight: 50, square: false }
+  // 配置项 minWidth：缩放的最小宽度，minHeight：缩放最小高度，squre: 缩放后是否保持宽高比
+  options = { minWidth: 50, minHeight: 50, square: false }
   target = null // 目标元素
   img = null // 图片元素
   top = null // 上边框
@@ -210,7 +210,11 @@ class ZoomAndDrag {
     this.width = this.target.offsetWidth
     this.height = this.target.offsetHeight
     this.newWidth = this.width
-    this.newHeight = this.height
+    if (this.options.square) {
+      this.newHeight = this.newWidth
+    } else {
+      this.newHeight = this.height
+    }
 
     let translateStr = this.target.style.transform
     const reg = /\d+/g
@@ -329,36 +333,32 @@ class ZoomAndDrag {
   leftInfo(e) {
     this.newWidth = this.width - (e.clientX - this.startX)
     this.newTx = this.tx + (e.clientX - this.startX)
-    if(this.options.limit) {
-      this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.width + this.tx))
-      this.newTx = Math.max(0, Math.min(this.newTx, this.width + this.tx - this.options.minWidth))
-    }
+
+    this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.width + this.tx))
+    this.newTx = Math.max(0, Math.min(this.newTx, this.width + this.tx - this.options.minWidth))
   }
 
   // 向右进行缩放操作
   rightInfo(e) {
     this.newWidth = this.width + (e.clientX - this.startX)
-    if(this.options.limit) {
-      this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.pWidth - this.tx))
-    }
+
+    this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.pWidth - this.tx))
   }
 
   // 向上进行缩放操作
   topInfo(e) {
     this.newHeight = this.height - (e.clientY - this.startY)
     this.newTy = this.ty + (e.clientY - this.startY)
-    if(this.options.limit) {
-      this.newHeight = Math.max(this.options.minHeight, Math.min(this.newHeight, this.height + this.ty))
-      this.newTy = Math.max(0, Math.min(this.newTy, this.height + this.ty - this.options.minHeight))
-    }
+
+    this.newHeight = Math.max(this.options.minHeight, Math.min(this.newHeight, this.height + this.ty))
+    this.newTy = Math.max(0, Math.min(this.newTy, this.height + this.ty - this.options.minHeight))
   }
 
   // 向下进行缩放操作
   bottomInfo(e) {
     this.newHeight = this.height + (e.clientY - this.startY)
-    if(this.options.limit) {
-      this.newHeight = Math.max(this.options.minHeight, Math.min(this.newHeight, this.pHeight - this.ty))
-    }
+
+    this.newHeight = Math.max(this.options.minHeight, Math.min(this.newHeight, this.pHeight - this.ty))
   }
 
   // 左上角进行缩放操作
