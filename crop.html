@@ -109,47 +109,35 @@
 </head>
 <body>
   <div class="cut-container">
-    <img src="./assets/imgs/6.jpeg" crossorigin="anonymous">
+    <img src="./assets/imgs/2.jpeg" crossorigin="anonymous">
     <div id="select-box"></div>
   </div>
-  <canvas width="200" height="200"></canvas>
   <button type="button" id="crop-btn">裁剪</button>
 </body>
 <script>
-  const img = document.querySelector('img');
-  const selectBox = document.querySelector('#select-box');
-  const cropBtn = document.querySelector('#crop-btn');
-  const canvasEl = document.querySelector('canvas');
 
-  // 图片加载完成
-  img.addEventListener('load', () => {
-    // 显示区域选择框
-    selectBox.style.display = 'block';
-    // 把区域选择框放到 img 上
-    selectBox.style.top = img.offsetTop + 'px';
-    selectBox.style.left = img.offsetLeft + 'px';
-    // new Zoom(selectBox)
-    new ZoomAndDrag(selectBox)
-  });
+const img = document.querySelector('img');
+const selectBox = document.querySelector('#select-box');
+const cropBtn = document.querySelector('#crop-btn');
+
+let dropIns = null
+// 图片加载完成
+img.addEventListener('load', () => {
+  selectBox.style.display = 'block';
+  // 把区域选择框放到 img 上
+  selectBox.style.top = img.offsetTop + 'px';
+  selectBox.style.left = img.offsetLeft + 'px';
+  dropIns = new ZoomAndDrag(selectBox, img)
+});
 
 
 // 图片裁剪按钮点击
-cropBtn.addEventListener('click', () => {
-  let translateStr = selectBox.style.transform
-  const reg = /\d+/g
-  let translateArr = translateStr.match(reg)
-  const sX = Number(translateArr[0])
-  const sY = Number(translateArr[1])
-  const sW = selectBox.offsetWidth;  // 区域选择框宽度
-  const sH = selectBox.offsetHeight;  // 区域选择框高度
-  console.log(sX, sY, sW, sH)
-  // 把图片截取到 canvas
-  canvasEl.getContext('2d').drawImage(img, sX, sY, sW, sH , 0, 0, canvasEl.width, canvasEl.height);
-  // 把裁剪后的 canvas 图像转为 Blob
-  canvasEl.toBlob(blob => {
-    if (blob === null) return false;
-    imgFile = blob;
-  }, 'image/jpeg');
+cropBtn.addEventListener('click', async () => {
+  const {blob, url} = await dropIns.crop()
+  console.log(blob, url)
+  const img = document.createElement('img')
+  img.src = url
+  document.body.append(img)
 });
 
 
@@ -171,11 +159,21 @@ class ZoomAndDrag {
   ty = 0 // 目标元素在 Y 轴上的初始偏移
   newTx = 0 // 目标元素缩放、移动后在 X 轴上的偏移
   newTy = 0 // 目标元素缩放、移动后在 Y 轴上的偏移
-  // 配置项，limit：是否限制在父元素内，minWidth：缩放的最小宽度，minHeight：缩放最小高度
-  options = { limit: true, minWidth: 50, minHeight: 50 }
+  // 配置项，limit：是否限制在父元素内，minWidth：缩放的最小宽度，minHeight：缩放最小高度，squre: 缩放后是否保持宽高比
+  options = { limit: true, minWidth: 50, minHeight: 50, square: false }
   target = null // 目标元素
-  constructor(target, options = {}) {
+  img = null // 图片元素
+  top = null // 上边框
+  bottom = null // 下边框
+  left = null // 左边框
+  right = null // 右边框
+  leftTop = null // 左上角
+  leftBottom = null // 左下角
+  rightTop = null // 右上角
+  rightBottom = null // 右下角
+  constructor(target, img, options = {}) {
     this.target = target
+    this.img = img
     this.options = { ...options, ...this.options }
     this.init()
   }
@@ -185,6 +183,8 @@ class ZoomAndDrag {
     if(!this.target.style.transform) {
       this.target.style.transform = "translate(0px,0px)"
     }
+    // 初始化时需获取元素自身信息，避免直接进行裁剪操作时，数据为空
+    this.getSelfInfo()
     this.getBoundary()
     this.drag()
     this.addHorn()
@@ -201,13 +201,16 @@ class ZoomAndDrag {
 
   // 获取目标元素的初始宽高、偏移以及鼠标的起始位置信息
   getInfo(e) {
+    this.getSelfInfo()
+
+    this.startX = e.clientX
+    this.startY = e.clientY
+  }
+  getSelfInfo() {
     this.width = this.target.offsetWidth
     this.height = this.target.offsetHeight
     this.newWidth = this.width
     this.newHeight = this.height
-
-    this.startX = e.clientX
-    this.startY = e.clientY
 
     let translateStr = this.target.style.transform
     const reg = /\d+/g
@@ -271,6 +274,23 @@ class ZoomAndDrag {
     })
   }
 
+  // 裁剪
+  crop() {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement("canvas")
+      const ctx = canvas.getContext("2d")
+      console.log(this.img, this.newTx, this.newTy, this.newWidth, this.newHeight, 0, 0, this.newWidth, this.newHeight)
+      ctx.drawImage(this.img, this.newTx, this.newTy, this.newWidth, this.newHeight, 0, 0, this.newWidth, this.newHeight)
+      canvas.toBlob(blob => {
+        if (blob === null) {
+          reject("图片裁剪失败")
+        } else {
+          const url = URL.createObjectURL(blob)
+          resolve({blob, url})
+        }
+      });
+    })
+  }
   // 添加四个角
   addHorn() {
     this.leftTop = document.createElement("div")
@@ -303,7 +323,7 @@ class ZoomAndDrag {
     this.target.append(this.bottom)
   }
 
-  // 获取缩放后的宽高、偏移等参数的值
+  // 向左进行缩放操作
   leftInfo(e) {
     this.newWidth = this.width - (e.clientX - this.startX)
     this.newTx = this.tx + (e.clientX - this.startX)
@@ -312,12 +332,16 @@ class ZoomAndDrag {
       this.newTx = Math.max(0, Math.min(this.newTx, this.width + this.tx - this.options.minWidth))
     }
   }
+
+  // 向右进行缩放操作
   rightInfo(e) {
     this.newWidth = this.width + (e.clientX - this.startX)
     if(this.options.limit) {
       this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.pWidth - this.tx))
     }
   }
+
+  // 向上进行缩放操作
   topInfo(e) {
     this.newHeight = this.height - (e.clientY - this.startY)
     this.newTy = this.ty + (e.clientY - this.startY)
@@ -326,24 +350,34 @@ class ZoomAndDrag {
       this.newTy = Math.max(0, Math.min(this.newTy, this.height + this.ty - this.options.minHeight))
     }
   }
+
+  // 向下进行缩放操作
   bottomInfo(e) {
     this.newHeight = this.height + (e.clientY - this.startY)
     if(this.options.limit) {
       this.newHeight = Math.max(this.options.minHeight, Math.min(this.newHeight, this.pHeight - this.ty))
     }
   }
+
+  // 左上角进行缩放操作
   leftTopInfo(e) {
     this.leftInfo(e)
     this.topInfo(e)
   }
+
+  // 左下角进行缩放操作
   leftBottomInfo(e) {
     this.leftInfo(e)
     this.bottomInfo(e)
   }
+
+  // 右上角进行缩放操作
   rightTopInfo(e) {
     this.rightInfo(e)
     this.topInfo(e)
   }
+
+  // 右下角进行缩放操作
   rightBottomInfo(e) {
     this.rightInfo(e)
     this.bottomInfo(e)
