@@ -87,6 +87,7 @@
   </style>
   <style>
     .cut-container {
+      margin: 100px;
       position: relative;
       width: fit-content;
       height: fit-content;
@@ -134,7 +135,6 @@ img.addEventListener('load', () => {
 // 图片裁剪按钮点击
 cropBtn.addEventListener('click', async () => {
   const {blob, url} = await dropIns.crop()
-  console.log(blob, url)
   const img = document.createElement('img')
   img.src = url
   document.body.append(img)
@@ -160,7 +160,7 @@ class ZoomAndDrag {
   newTx = 0 // 目标元素缩放、移动后在 X 轴上的偏移
   newTy = 0 // 目标元素缩放、移动后在 Y 轴上的偏移
   // 配置项 minWidth：缩放的最小宽度，minHeight：缩放最小高度，squre: 缩放后是否保持宽高比
-  options = { minWidth: 50, minHeight: 50, square: false }
+  options = { minWidth: 50, minHeight: 50, square: true }
   target = null // 目标元素
   img = null // 图片元素
   top = null // 上边框
@@ -216,25 +216,35 @@ class ZoomAndDrag {
       this.newHeight = this.height
     }
 
+    const translateDistance = this.getTranslateDistance()
+    this.tx = translateDistance.x
+    this.newTx = this.tx
+    this.ty = translateDistance.y
+    this.newTy = this.ty
+  }
+
+  // 获取目标元素当前的的偏移数据
+  getTranslateDistance() {
     let translateStr = this.target.style.transform
     const reg = /\d+/g
     let translateArr = translateStr.match(reg)
-    this.tx = +translateArr[0]
-    this.newTx = this.tx
-    this.ty = +translateArr[1]
-    this.newTy = this.ty
+
+    return {
+      x: +translateArr[0],
+      y: +translateArr[1]
+    }
   }
 
   // 获取父元素的宽高
   getBoundary() {
     this.pWidth = this.target.parentNode.clientWidth
     this.pHeight = this.target.parentNode.clientHeight
-    console.log(this.pWidth, this.pHeight)
   }
 
   // 拖动实现
   drag() {
     this.target.addEventListener("mousedown", (e) => {
+      console.log('drag', this.target.offsetLeft)
       this.getInfo(e)
       document.onmousemove = (e) => {
         this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
@@ -280,7 +290,6 @@ class ZoomAndDrag {
       canvas.width = this.newWidth
       canvas.height = this.newHeight
       const ctx = canvas.getContext("2d")
-      console.log(this.newTx, this.newTy, this.newWidth, this.newHeight, 0, 0, this.newWidth, this.newHeight)
       ctx.drawImage(this.img, this.newTx, this.newTy, this.newWidth, this.newHeight, 0, 0, this.newWidth, this.newHeight)
       canvas.toBlob(blob => {
         if (blob === null) {
@@ -326,11 +335,23 @@ class ZoomAndDrag {
 
   // 向左进行缩放操作
   leftInfo(e) {
-    this.newWidth = this.width - (e.clientX - this.startX)
-    this.newTx = this.tx + (e.clientX - this.startX)
+    const nWidth = this.width - (e.clientX - this.startX)
+    
+    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
 
-    this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.width + this.tx))
-    this.newTx = Math.max(0, Math.min(this.newTx, this.width + this.tx - this.options.minWidth))
+    const distnceX = this.tx + (e.clientX - this.startX)
+    if(!this.options.square) {
+      this.newTx = Math.max(0, Math.min(distnceX, this.width + this.tx - this.options.minWidth))
+    }
+    
+    if(this.options.square) {
+      if(this.newWidth >= this.pHeight - this.ty) {
+        this.newWidth = this.pHeight - this.ty
+      }
+      this.newHeight = this.newWidth
+      const minDistanceX = this.tx + this.width - this.newWidth;
+      this.newTx = Math.max(minDistanceX, Math.min(distnceX, this.width + this.tx - this.newWidth))
+    }
   }
 
   // 向右进行缩放操作
@@ -339,36 +360,101 @@ class ZoomAndDrag {
 
     this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.pWidth - this.tx))
     if(this.options.square) {
-
+      if(this.newWidth >= this.pHeight - this.ty) {
+        this.newWidth = this.pHeight - this.ty
+      }
+      this.newHeight = this.newWidth
     }
   }
 
   // 向上进行缩放操作
   topInfo(e) {
-    this.newHeight = this.height - (e.clientY - this.startY)
-    this.newTy = this.ty + (e.clientY - this.startY)
+    const nHeight = this.height - (e.clientY - this.startY)
 
-    this.newHeight = Math.max(this.options.minHeight, Math.min(this.newHeight, this.height + this.ty))
-    this.newTy = Math.max(0, Math.min(this.newTy, this.height + this.ty - this.options.minHeight))
+    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
+
+    const distnceY = this.ty + (e.clientY - this.startY)
+    if (!this.options.square) {
+      this.newTy = Math.max(0, Math.min(distnceY, this.height + this.ty - this.options.minHeight))
+    }
+
+    if (this.options.square) {
+      if (this.newHeight >= this.pWidth - this.tx) {
+        this.newHeight = this.pWidth - this.tx
+      }
+      this.newWidth = this.newHeight
+      const minDistanceY = this.ty + this.height - this.newHeight;
+      this.newTy = Math.max(minDistanceY, Math.min(distnceY, this.height + this.ty - this.newHeight))
+    }
   }
 
   // 向下进行缩放操作
   bottomInfo(e) {
-    this.newHeight = this.height + (e.clientY - this.startY)
+    const nHeight = this.height + (e.clientY - this.startY)
 
-    this.newHeight = Math.max(this.options.minHeight, Math.min(this.newHeight, this.pHeight - this.ty))
+    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.pHeight - this.ty))
+    if (this.options.square) {
+      if (this.newHeight >= this.pWidth - this.tx) {
+        this.newHeight = this.pWidth - this.tx
+      }
+      this.newWidth = this.newHeight
+    }
   }
 
   // 左上角进行缩放操作
   leftTopInfo(e) {
-    this.leftInfo(e)
-    this.topInfo(e)
+    const nWidth = this.width - (e.clientX - this.startX)
+    const nHeight = this.height - (e.clientY - this.startY)
+
+    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
+    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
+
+    const distnceX = this.tx + (e.clientX - this.startX)
+    const distnceY = this.ty + (e.clientY - this.startY)
+    if(!this.options.square) {
+      this.newTx = Math.max(0, Math.min(distnceX, this.width + this.tx - this.options.minWidth))
+      this.newTy = Math.max(0, Math.min(distnceY, this.height + this.ty - this.options.minHeight))
+    }
+    
+    if(this.options.square) {
+      if (this.newWidth >= this.pHeight - this.ty) {
+        this.newWidth = this.pHeight - this.ty
+      }
+      if (this.newHeight >= this.pWidth - this.tx) {
+        this.newHeight = this.pWidth - this.tx
+      }
+      this.newHeight = this.newWidth = Math.max(this.newWidth, this.newHeight)
+      const minDistanceX = this.tx + this.width - this.newWidth;
+      const minDistanceY = this.ty + this.height - this.newHeight;
+      this.newTx = Math.max(minDistanceX, Math.min(distnceX, this.width + this.tx - this.newWidth))
+      this.newTy = Math.max(minDistanceY, Math.min(distnceY, this.height + this.ty - this.newHeight))
+    }
   }
 
   // 左下角进行缩放操作
   leftBottomInfo(e) {
-    this.leftInfo(e)
-    this.bottomInfo(e)
+    const nWidth = this.width - (e.clientX - this.startX)
+    const nHeight = this.height + (e.clientY - this.startY)
+    
+    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
+    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.pHeight - this.ty))
+
+    const distnceX = this.tx + (e.clientX - this.startX)
+    if(!this.options.square) {
+      this.newTx = Math.max(0, Math.min(distnceX, this.width + this.tx - this.options.minWidth))
+    }
+    
+    if(this.options.square) {
+      if (this.newWidth >= this.pHeight - this.ty) {
+        this.newWidth = this.pHeight - this.ty
+      }
+      if (this.newHeight >= this.pWidth - this.tx) {
+        this.newHeight = this.pWidth - this.tx
+      }
+      this.newWidth = this.newHeight = Math.max(this.newWidth, this.newHeight)
+      const minDistanceX = this.tx + this.width - this.newWidth;
+      this.newTx = Math.max(minDistanceX, Math.min(distnceX, this.width + this.tx - this.newWidth))
+    }
   }
 
   // 右上角进行缩放操作
