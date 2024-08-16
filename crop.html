@@ -163,17 +163,11 @@ class ZoomAndDrag {
   options = { minWidth: 50, minHeight: 50, square: true }
   target = null // 目标元素
   img = null // 图片元素
-  top = null // 上边框
-  bottom = null // 下边框
-  left = null // 左边框
-  right = null // 右边框
-  leftTop = null // 左上角
-  leftBottom = null // 左下角
-  rightTop = null // 右上角
-  rightBottom = null // 右下角
-  constructor(target, img, options = {}) {
+  dragNodes = [] // 缩放节点
+  constructor(target, img, options = {}, dragNodes = ['left', 'right', 'top', 'bottom', 'leftTop', 'leftBottom', 'rightTop', 'rightBottom']) {
     this.target = target
     this.img = img
+    this.dragNodes = dragNodes
     this.options = { ...options, ...this.options }
     this.init()
   }
@@ -187,8 +181,7 @@ class ZoomAndDrag {
     this.getSelfInfo()
     this.getBoundary()
     this.drag()
-    this.addHorn()
-    this.addBorder()
+    this.addZoomEl()
     this.zoom(this.left, "left")
     this.zoom(this.right,"right")
     this.zoom(this.top,"top")
@@ -301,42 +294,25 @@ class ZoomAndDrag {
       });
     })
   }
-  // 添加四个角
-  addHorn() {
-    this.leftTop = document.createElement("div")
-    this.rightTop = document.createElement("div")
-    this.leftBottom = document.createElement("div")
-    this.rightBottom = document.createElement("div")
+  // 添加缩放时的拖动元素
+  addZoomEl() {
+    this.dragNodes.forEach(item => {
+      this[item] = document.createElement("div")
+      this.target.append(this[item])
+    })
+    // 设置样式
     this.leftTop.className = "horn leftTop"
     this.rightTop.className = "horn rightTop"
     this.leftBottom.className = "horn leftBottom"
     this.rightBottom.className = "horn rightBottom"
-    this.target.append(this.leftTop)
-    this.target.append(this.rightTop)
-    this.target.append(this.leftBottom)
-    this.target.append(this.rightBottom)
-  }
-
-  // 添加四条边
-  addBorder() {
-    this.left = document.createElement("div")
-    this.right = document.createElement("div")
-    this.top = document.createElement("div")
-    this.bottom = document.createElement("div")
     this.left.className = "vertical left"
     this.right.className = "vertical right"
     this.top.className = "horizontal top"
     this.bottom.className = "horizontal bottom"
-    this.target.append(this.left)
-    this.target.append(this.right)
-    this.target.append(this.top)
-    this.target.append(this.bottom)
   }
-
   // 向左进行缩放操作
   leftInfo(e) {
     const nWidth = this.width - (e.clientX - this.startX)
-    
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
 
     const distnceX = this.tx + (e.clientX - this.startX)
