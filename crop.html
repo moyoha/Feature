@@ -381,13 +381,16 @@ class ZoomAndDrag {
     }
     
     if(this.options.square) {
-      if (this.newWidth >= this.pHeight - this.ty) {
-        this.newWidth = this.pHeight - this.ty
+      const maxHeight = this.height + this.ty
+      const maxWidth = this.pWidth - this.tx
+      console.log(maxHeight, maxWidth);
+      if (this.newWidth >= maxHeight) {
+        this.newWidth = maxHeight
       }
-      if (this.newHeight >= this.pWidth - this.tx) {
-        this.newHeight = this.pWidth - this.tx
+      if (this.newHeight >= maxWidth) {
+        this.newHeight = maxWidth
       }
-      this.newHeight = this.newWidth = Math.max(this.newWidth, this.newHeight)
+      this.newHeight = this.newWidth = Math.min(maxHeight, maxWidth, this.newWidth, this.newHeight)
       const minDistanceX = this.tx + this.width - this.newWidth;
       const minDistanceY = this.ty + this.height - this.newHeight;
       this.newTx = Math.max(minDistanceX, Math.min(distnceX, this.width + this.tx - this.newWidth))
