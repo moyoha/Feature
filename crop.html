@@ -182,14 +182,9 @@ class ZoomAndDrag {
     this.getBoundary()
     this.drag()
     this.addZoomEl()
-    this.zoom(this.left, "left")
-    this.zoom(this.right,"right")
-    this.zoom(this.top,"top")
-    this.zoom(this.bottom,"bottom")
-    this.zoom(this.leftTop,"leftTop")
-    this.zoom(this.leftBottom,"leftBottom")
-    this.zoom(this.rightTop,"rightTop")
-    this.zoom(this.rightBottom,"rightBottom")
+    this.dragNodes.forEach((node) => {
+      this.zoom(node)
+    })
   }
 
   // 获取目标元素的初始宽高、偏移以及鼠标的起始位置信息
@@ -250,22 +245,13 @@ class ZoomAndDrag {
     })
   }
 
-  // 缩放实现
-  zoom(el, direction) {
-    el.addEventListener("mousedown", (e) => {
+  // 为拖动元素添加事件
+  zoom(node) {
+    this[node].addEventListener("mousedown", (e) => {
       e.stopPropagation()
       this.getInfo(e)
       document.onmousemove = (e) => {
-        switch(direction) {
-          case "left": this.leftInfo(e); break;
-          case "right": this.rightInfo(e); break;
-          case "top": this.topInfo(e); break;
-          case "bottom": this.bottomInfo(e); break;
-          case "leftTop": this.leftTopInfo(e); break;
-          case "leftBottom": this.leftBottomInfo(e); break;
-          case "rightTop": this.rightTopInfo(e); break;
-          case "rightBottom": this.rightBottomInfo(e); break;
-        }
+        this[`${node}Zoom`](e)
         this.target.style.width = `${this.newWidth}px`
         this.target.style.height = `${this.newHeight}px`
         this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`
@@ -296,22 +282,24 @@ class ZoomAndDrag {
   }
   // 添加缩放时的拖动元素
   addZoomEl() {
-    this.dragNodes.forEach(item => {
-      this[item] = document.createElement("div")
-      this.target.append(this[item])
+    const classNames = {
+      left: 'vertical left',
+      right: 'vertical right',
+      top: 'horizontal top',
+      bottom: 'horizontal bottom',
+      leftTop: 'horn leftTop',
+      leftBottom: 'horn leftBottom',
+      rightTop: 'horn rightTop',
+      rightBottom: 'horn rightBottom'
+    }
+    this.dragNodes.forEach(node => {
+      this[node] = document.createElement("div")
+      this[node].className = classNames[node]
+      this.target.append(this[node])
     })
-    // 设置样式
-    this.leftTop.className = "horn leftTop"
-    this.rightTop.className = "horn rightTop"
-    this.leftBottom.className = "horn leftBottom"
-    this.rightBottom.className = "horn rightBottom"
-    this.left.className = "vertical left"
-    this.right.className = "vertical right"
-    this.top.className = "horizontal top"
-    this.bottom.className = "horizontal bottom"
   }
   // 向左进行缩放操作
-  leftInfo(e) {
+  leftZoom(e) {
     const nWidth = this.width - (e.clientX - this.startX)
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
 
@@ -331,7 +319,7 @@ class ZoomAndDrag {
   }
 
   // 向右进行缩放操作
-  rightInfo(e) {
+  rightZoom(e) {
     this.newWidth = this.width + (e.clientX - this.startX)
 
     this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.pWidth - this.tx))
@@ -344,7 +332,7 @@ class ZoomAndDrag {
   }
 
   // 向上进行缩放操作
-  topInfo(e) {
+  topZoom(e) {
     const nHeight = this.height - (e.clientY - this.startY)
 
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
@@ -365,7 +353,7 @@ class ZoomAndDrag {
   }
 
   // 向下进行缩放操作
-  bottomInfo(e) {
+  bottomZoom(e) {
     const nHeight = this.height + (e.clientY - this.startY)
 
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.pHeight - this.ty))
@@ -378,7 +366,7 @@ class ZoomAndDrag {
   }
 
   // 左上角进行缩放操作
-  leftTopInfo(e) {
+  leftTopZoom(e) {
     const nWidth = this.width - (e.clientX - this.startX)
     const nHeight = this.height - (e.clientY - this.startY)
 
@@ -408,7 +396,7 @@ class ZoomAndDrag {
   }
 
   // 左下角进行缩放操作
-  leftBottomInfo(e) {
+  leftBottomZoom(e) {
     const nWidth = this.width - (e.clientX - this.startX)
     const nHeight = this.height + (e.clientY - this.startY)
     
@@ -434,15 +422,15 @@ class ZoomAndDrag {
   }
 
   // 右上角进行缩放操作
-  rightTopInfo(e) {
-    this.rightInfo(e)
-    this.topInfo(e)
+  rightTopZoom(e) {
+    this.rightZoom(e)
+    this.topZoom(e)
   }
 
   // 右下角进行缩放操作
-  rightBottomInfo(e) {
-    this.rightInfo(e)
-    this.bottomInfo(e)
+  rightBottomZoom(e) {
+    this.rightZoom(e)
+    this.bottomZoom(e)
   }
 }
 
