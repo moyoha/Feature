@@ -6,277 +6,278 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zoom</title>
   <style>
-    .box{
-      margin: 50px;
-      width: 500px;
-      height: 300px;
-      border: 1px solid black;
-      position: relative;
-    }
-    .drag{
-      height: 100px;
-      width: 100px;
-      background-color: #cbd;
-    }
+    /* 四个角的样式 start */
     .horn {
-      width: 14px;
-      height: 14px;
-      background-color: red;
+      width: 8px;
+      height: 8px;
+      background-color: #fff;
       position: absolute;
-    }
-    .vertical {
-      width: 10px;
-      height: calc(100% - 14px);
-      margin: 7px 0px;
-      position: absolute;
-      background-color: #000;
-      cursor: col-resize;
-    }
-    .horizontal {
-      width: calc(100% - 14px);
-      height: 10px;
-      margin: 0px 7px;
-      position: absolute;
-      background-color: #000;
-      cursor: row-resize;
-    }
-    .top {
-      top: -5px;
-      left: 0;
-    }
-    .left {
-      top: 0;
-      left: -5px;
-    }
-
-    .bottom {
-      left: 0;
-      bottom: -5px;
-    }
-
-    .right {
-      top: 0;
-      right: -5px;
+      border: 1px solid #dbdbdb;
+      border-radius: 50%;
     }
     .leftTop {
       cursor: nw-resize;
-      left: -7px;
-      top: -7px;
+      left: -4px;
+      top: -4px;
     }
 
     .rightTop {
       cursor: ne-resize;
-      right: -7px;
-      top: -7px;
+      right: -4px;
+      top: -4px;
     }
 
     .leftBottom {
       cursor: sw-resize;
-      bottom: -7px;
-      left: -7px;
+      bottom: -4px;
+      left: -4px;
     }
 
     .rightBottom {
       cursor: se-resize;
-      right: -7px;
-      bottom: -7px;
+      right: -4px;
+      bottom: -4px;
+    }
+    /* 四个角的样式 end */
+
+    /* 左右两侧样式 start */
+    .vertical {
+      width: 6px;
+      height: 12px;
+      position: absolute;
+      background-color: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 3px;
+      cursor: col-resize;
+    }
+    .left {
+      top: calc(50% - 6px);
+      left: -3px;
+    }
+    .right {
+      top: calc(50% - 6px);
+      right: -3px;
+    }
+    /* 左右两侧样式 end */
+    /* 上下两侧样式 start */
+    .horizontal {
+      width: 12px;
+      height: 6px;
+      position: absolute;
+      background-color: #fff;
+      border: 1px solid #dbdbdb;
+      border-radius: 3px;
+      cursor: row-resize;
+    }
+    .top {
+      top: -3px;
+      left: calc(50% - 6px);
+    }
+    
+    .bottom {
+      left: calc(50% - 6px);
+      bottom: -3px;
+    }
+    /* 上下两侧样式 end */
+  </style>
+  <style>
+    .container {
+      margin: 100px;
+      position: relative;
+      width: 400px;
+      height: 400px;
+      user-select: none;
+      border: 1px solid black;
+    }
+    .drag {
+      width: 100px;
+      height: 100px;
+      border: 1px solid #5864f6;
+      position: absolute;
+      cursor: move;
+      z-index: 100;
     }
   </style>
 </head>
 <body>
-  <div class="box">
+  <div class="container">
     <div class="drag"></div>
   </div>
-  <script>
-    let dragEl = document.querySelector(".drag")
-    let container = document.querySelector(".box")
+<script>
+const dragEl = document.querySelector(".drag")
 
-    class Drag {
-      constructor(target, options = { limit: true }) {
-        this.target = target
-        this.options = options
-        this.init()
-      }
-      init(){
-        if(!this.target.style.transform) {
-          this.target.style.transform = "translate(0px,0px)"
-        }
-        this.getBoundary()
-        this.drag()
-      }
-      // 获取父元素的宽高
-      getBoundary() {
-        this.pWidth = this.target.parentNode.clientWidth
-        this.pHeight = this.target.parentNode.clientHeight
-      }
-      // 获取目标元素的初始宽高、偏移以及鼠标的起始位置信息
-      getInfo(e) {
-        this.width = this.target.offsetWidth
-        this.height = this.target.offsetHeight
-
-        this.startX = e.clientX
-        this.startY = e.clientY
-
-        let translateStr = this.target.style.transform
-        const reg = /\d+/g
-        let translateArr = translateStr.match(reg)
-        this.tx = Number(translateArr[0])
-        this.ty = Number(translateArr[1])
-      }
-      // 拖动实现
-      drag() {
-        this.target.addEventListener("mousedown", (e) => {
-          this.getInfo(e)
-          document.onmousemove = (e) => {
-            if(this.options.limit){
-              this.distanceX = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
-              this.distanceY = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height))
-            }else{
-              this.distanceX = this.tx + e.clientX - this.startX
-              this.distanceY = this.ty + e.clientY - this.startY
-            }
-            this.target.style.transform = `translate(${this.distanceX}px, ${this.distanceY}px)`
-          }
-          document.onmouseup = () => {
-            document.onmousemove = null
-          }
-        })
-      }
+class Zoom {
+  width = 0 // 目标元素宽度
+  height = 0 // 目标元素高度
+  pWidth = 0 // 目标父元素宽度
+  pHeight = 0 // 目标父元素高度
+  newWidth = 0 // 目标元素缩放后的宽度
+  newHeight = 0 // 目标元素缩放后的高度
+  startX = 0 // 鼠标起始位置的 X 坐标
+  startY = 0 // 鼠标起始位置的 Y 坐标
+  tx = 0 // 目标元素在 X 轴上的初始偏移
+  ty = 0 // 目标元素在 Y 轴上的初始偏移
+  newTx = 0 // 目标元素缩放、移动后在 X 轴上的偏移
+  newTy = 0 // 目标元素缩放、移动后在 Y 轴上的偏移
+  // 配置项 minWidth：缩放的最小宽度，minHeight：缩放最小高度，squre: 缩放后是否保持宽高比
+  options = { minWidth: 50, minHeight: 50, square: true }
+  target = null // 目标元素
+  dragNodes = [] // 缩放节点
+  constructor(target, options = {}, dragNodes = ['left', 'right', 'top', 'bottom', 'leftTop', 'leftBottom', 'rightTop', 'rightBottom']) {
+    this.target = target
+    this.dragNodes = dragNodes
+    this.options = { ...options, ...this.options }
+    this.init()
+  }
+  init(){
+    this.target.style.position = "absolute"
+    if(!this.target.style.transform) {
+      this.target.style.transform = "translate(0px,0px)"
     }
-    
-    class Zoom extends Drag {
-      constructor(target, options = { limit: true, minWidth: 0, minHeight: 0 }) {
-        super(target, options = { limit: true, minWidth: 50, minHeight: 50 })
-      }
-      init(){
-        this.target.style.position = "relative"
-        if(!this.target.style.transform) {
-          this.target.style.transform = "translate(0px,0px)"
-        }
-        this.getBoundary()
-        this.drag()
-        this.addHorn()
-        this.addBorder()
-        this.zoom(this.left, "left")
-        this.zoom(this.right,"right")
-        this.zoom(this.top,"top")
-        this.zoom(this.bottom,"bottom")
-        this.zoom(this.leftTop,"leftTop")
-        this.zoom(this.leftBottom,"leftBottom")
-        this.zoom(this.rightTop,"rightTop")
-        this.zoom(this.rightBottom,"rightBottom")
-      }
-      // 添加四个角
-      addHorn() {
-        this.leftTop = document.createElement("div")
-        this.rightTop = document.createElement("div")
-        this.leftBottom = document.createElement("div")
-        this.rightBottom = document.createElement("div")
-        this.leftTop.className = "horn leftTop"
-        this.rightTop.className = "horn rightTop"
-        this.leftBottom.className = "horn leftBottom"
-        this.rightBottom.className = "horn rightBottom"
-        this.target.append(this.leftTop)
-        this.target.append(this.rightTop)
-        this.target.append(this.leftBottom)
-        this.target.append(this.rightBottom)
-      }
-      // 添加四条边
-      addBorder() {
-        this.left = document.createElement("div")
-        this.right = document.createElement("div")
-        this.top = document.createElement("div")
-        this.bottom = document.createElement("div")
-        this.left.className = "vertical left"
-        this.right.className = "vertical right"
-        this.top.className = "horizontal top"
-        this.bottom.className = "horizontal bottom"
-        this.target.append(this.left)
-        this.target.append(this.right)
-        this.target.append(this.top)
-        this.target.append(this.bottom)
-      }
-      // 获取缩放后的宽高、偏移等参数的值
-      leftInfo(e) {
-        this.newWidth = this.width - (e.clientX - this.startX)
-        this.distanceX = this.tx + (e.clientX - this.startX)
-        if(this.options.limit) {
-          this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.width + this.tx))
-          this.distanceX = Math.max(0, Math.min(this.distanceX, this.width + this.tx - this.options.minWidth))
-        }
-      }
-      rightInfo(e) {
-        this.newWidth = this.width + (e.clientX - this.startX)
-        if(this.options.limit) {
-          this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.pWidth - this.tx))
-        }
-      }
-      topInfo(e) {
-        this.newHeight = this.height - (e.clientY - this.startY)
-        this.distanceY = this.ty + (e.clientY - this.startY)
-        if(this.options.limit) {
-          this.newHeight = Math.max(this.options.minHeight, Math.min(this.newHeight, this.height + this.ty))
-          this.distanceY = Math.max(0, Math.min(this.distanceY, this.height + this.ty - this.options.minHeight))
-        }
-      }
-      bottomInfo(e) {
-        this.newHeight = this.height + (e.clientY - this.startY)
-        if(this.options.limit) {
-          this.newHeight = Math.max(this.options.minHeight, Math.min(this.newHeight, this.pHeight - this.ty))
-        }
-      }
-      leftTopInfo(e) {
-        this.leftInfo(e)
-        this.topInfo(e)
-      }
-      leftBottomInfo(e) {
-        this.leftInfo(e)
-        this.bottomInfo(e)
-      }
-      rightTopInfo(e) {
-        this.rightInfo(e)
-        this.topInfo(e)
-      }
-      rightBottomInfo(e) {
-        this.rightInfo(e)
-        this.bottomInfo(e)
-      }
-      // 缩放实现
-      zoom(el, direction) {
-        el.addEventListener("mousedown", (e) => {
-          e.stopPropagation()
-          this.getInfo(e)
-          document.onmousemove = (e) => {
-            switch(direction) {
-              case "left": this.leftInfo(e); break;
-              case "right": this.rightInfo(e); break;
-              case "top": this.topInfo(e); break;
-              case "bottom": this.bottomInfo(e); break;
-              case "leftTop": this.leftTopInfo(e); break;
-              case "leftBottom": this.leftBottomInfo(e); break;
-              case "rightTop": this.rightTopInfo(e); break;
-              case "rightBottom": this.rightBottomInfo(e); break;
-            }
-            // 这里不能直接使用对this.newWidth隐式类型转换来判断，因为this.newWidth===0时，会使用this.width
-            let width = this.newWidth !== undefined ? this.newWidth : this.width
-            let height = this.newHeight !== undefined ? this.newHeight : this.height
-            let translateX = this.distanceX !== undefined ? this.distanceX : this.tx
-            let translateY = this.distanceY !== undefined ? this.distanceY : this.ty
-            this.target.style.width = `${width}px`
-            this.target.style.height = `${height}px`
-            this.target.style.transform = `translate(${translateX}px, ${translateY}px)`
-          }
-          document.onmouseup = () => {
-            document.onmousemove = null
-          }
-        })
-      }
+    this.getBoundary()
+    this.drag()
+    this.addZoomEl()
+    this.dragNodes.forEach((node) => {
+      this.zoom(node)
+    })
+  }
+
+  // 获取目标元素的初始宽高、偏移以及鼠标的起始位置信息
+  getInfo(e) {
+    this.getSelfInfo()
+
+    this.startX = e.clientX
+    this.startY = e.clientY
+  }
+
+  getSelfInfo() {
+    this.width = this.target.clientWidth
+    this.height = this.target.clientHeight
+    this.newWidth = this.width
+    this.newHeight = this.height
+
+    const translateDistance = this.getTranslateDistance()
+    this.tx = translateDistance.x
+    this.newTx = this.tx
+    this.ty = translateDistance.y
+    this.newTy = this.ty
+  }
+  // 获取目标元素当前的的偏移数据
+  getTranslateDistance() {
+    let translateStr = this.target.style.transform
+    const reg = /\d+/g
+    let translateArr = translateStr.match(reg)
+
+    return {
+      x: +translateArr[0],
+      y: +translateArr[1]
     }
-    /** 注意事项 
-     * 1. 目标元素若存在外边距，那么目标元素在移动时会超出父元素(定位同理)
-     * 2. 父元素若存在内边距，那么目标元素在移动时也会超出父元素
-     */
-    new Zoom(dragEl)
-  </script>
+  }
+  // 获取父元素的宽高
+  getBoundary() {
+    this.pWidth = this.target.parentNode.clientWidth
+    this.pHeight = this.target.parentNode.clientHeight
+  }
+  // 拖动实现
+  drag() {
+    this.target.addEventListener("mousedown", (e) => {
+      console.log('drag', this.target.offsetLeft)
+      this.getInfo(e)
+      document.onmousemove = (e) => {
+        this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
+        this.newTy = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height))
+        this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`
+      }
+      document.onmouseup = () => {
+        document.onmousemove = null
+      }
+    })
+  }
+
+  // 为拖动元素添加事件
+  zoom(node) {
+    this[node].addEventListener("mousedown", (e) => {
+      e.stopPropagation()
+      this.getInfo(e)
+      document.onmousemove = (e) => {
+        this[`${node}Zoom`](e)
+        this.target.style.width = `${this.newWidth}px`
+        this.target.style.height = `${this.newHeight}px`
+        this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`
+      }
+      document.onmouseup = () => {
+        document.onmousemove = null
+      }
+    })
+  }
+  // 添加缩放时的拖动元素
+  addZoomEl() {
+    const classNames = {
+      left: 'vertical left',
+      right: 'vertical right',
+      top: 'horizontal top',
+      bottom: 'horizontal bottom',
+      leftTop: 'horn leftTop',
+      leftBottom: 'horn leftBottom',
+      rightTop: 'horn rightTop',
+      rightBottom: 'horn rightBottom'
+    }
+    this.dragNodes.forEach(node => {
+      this[node] = document.createElement("div")
+      this[node].className = classNames[node]
+      this.target.append(this[node])
+    })
+  }
+  // 向左进行缩放操作
+  leftZoom(e) {
+    const nWidth = this.width - (e.clientX - this.startX)
+    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
+
+    const distnceX = this.tx + (e.clientX - this.startX)
+    this.newTx = Math.max(0, Math.min(distnceX, this.width + this.tx - this.options.minWidth))
+  }
+  // 向右进行缩放操作
+  rightZoom(e) {
+    const nWidth = this.width + (e.clientX - this.startX)
+    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.pWidth - this.tx))
+  }
+  // 向上进行缩放操作
+  topZoom(e) {
+    const nHeight = this.height - (e.clientY - this.startY)
+    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
+
+    const distnceY = this.ty + (e.clientY - this.startY)
+    this.newTy = Math.max(0, Math.min(distnceY, this.height + this.ty - this.options.minHeight))
+  }
+  // 向下进行缩放操作
+  bottomZoom(e) {
+    const nHeight = this.height + (e.clientY - this.startY)
+    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.pHeight - this.ty))
+  }
+  // 左上角进行缩放操作
+  leftTopZoom(e) {
+    this.leftZoom(e)
+    this.topZoom(e)
+  }
+  // 左下角进行缩放操作
+  leftBottomZoom(e) {
+    this.leftZoom(e)
+    this.bottomZoom(e)
+  }
+  // 右上角进行缩放操作
+  rightTopZoom(e) {
+    this.rightZoom(e)
+    this.topZoom(e)
+  }
+
+  // 右下角进行缩放操作
+  rightBottomZoom(e) {
+    this.rightZoom(e)
+    this.bottomZoom(e)
+  }
+}
+
+new Zoom(dragEl)
+</script>
 </body>
 </html>
