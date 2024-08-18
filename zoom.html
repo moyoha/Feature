@@ -181,7 +181,6 @@ class Zoom {
   // 拖动实现
   drag() {
     this.target.addEventListener("mousedown", (e) => {
-      console.log('drag', this.target.offsetLeft)
       this.getInfo(e)
       document.onmousemove = (e) => {
         this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
@@ -230,11 +229,11 @@ class Zoom {
   }
   // 向左进行缩放操作
   leftZoom(e) {
-    const nWidth = this.width - (e.clientX - this.startX)
-    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
+    const nWidth = this.width + (this.startX - e.clientX)
+    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.tx + this.width))
 
     const distnceX = this.tx + (e.clientX - this.startX)
-    this.newTx = Math.max(0, Math.min(distnceX, this.width + this.tx - this.options.minWidth))
+    this.newTx = Math.max(0, Math.min(distnceX, this.tx + (this.width - this.options.minWidth)))
   }
   // 向右进行缩放操作
   rightZoom(e) {
@@ -243,11 +242,11 @@ class Zoom {
   }
   // 向上进行缩放操作
   topZoom(e) {
-    const nHeight = this.height - (e.clientY - this.startY)
+    const nHeight = this.height + (this.startY - e.clientY)
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
 
     const distnceY = this.ty + (e.clientY - this.startY)
-    this.newTy = Math.max(0, Math.min(distnceY, this.height + this.ty - this.options.minHeight))
+    this.newTy = Math.max(0, Math.min(distnceY, this.ty + (this.height - this.options.minHeight)))
   }
   // 向下进行缩放操作
   bottomZoom(e) {
