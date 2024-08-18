@@ -110,7 +110,7 @@
 </head>
 <body>
   <div class="cut-container">
-    <img src="./assets/imgs/2.jpeg" crossorigin="anonymous">
+    <img src="./assets/imgs/3.jpeg" crossorigin="anonymous">
     <div id="select-box"></div>
   </div>
   <button type="button" id="crop-btn">裁剪</button>
@@ -232,7 +232,6 @@ class ZoomAndDrag {
   // 拖动实现
   drag() {
     this.target.addEventListener("mousedown", (e) => {
-      console.log('drag', this.target.offsetLeft)
       this.getInfo(e)
       document.onmousemove = (e) => {
         this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
@@ -300,29 +299,26 @@ class ZoomAndDrag {
   }
   // 向左进行缩放操作
   leftZoom(e) {
-    const nWidth = this.width - (e.clientX - this.startX)
+    const nWidth = this.width + (this.startX - e.clientX)
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
 
     const distnceX = this.tx + (e.clientX - this.startX)
-    if(!this.options.square) {
-      this.newTx = Math.max(0, Math.min(distnceX, this.width + this.tx - this.options.minWidth))
-    }
+    this.newTx = Math.max(0, Math.min(distnceX, this.tx + (this.width - this.options.minWidth)))
     
     if(this.options.square) {
       if(this.newWidth >= this.pHeight - this.ty) {
         this.newWidth = this.pHeight - this.ty
       }
       this.newHeight = this.newWidth
-      const minDistanceX = this.tx + this.width - this.newWidth;
-      this.newTx = Math.max(minDistanceX, Math.min(distnceX, this.width + this.tx - this.newWidth))
+      this.newTx = this.tx + this.width - this.newWidth;
     }
   }
 
   // 向右进行缩放操作
   rightZoom(e) {
-    this.newWidth = this.width + (e.clientX - this.startX)
+    const nWidth = this.width + (e.clientX - this.startX)
 
-    this.newWidth = Math.max(this.options.minWidth, Math.min(this.newWidth, this.pWidth - this.tx))
+    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.pWidth - this.tx))
     if(this.options.square) {
       if(this.newWidth >= this.pHeight - this.ty) {
         this.newWidth = this.pHeight - this.ty
@@ -333,30 +329,26 @@ class ZoomAndDrag {
 
   // 向上进行缩放操作
   topZoom(e) {
-    const nHeight = this.height - (e.clientY - this.startY)
-
+    const nHeight = this.height + (this.startY - e.clientY)
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
 
     const distnceY = this.ty + (e.clientY - this.startY)
-    if (!this.options.square) {
-      this.newTy = Math.max(0, Math.min(distnceY, this.height + this.ty - this.options.minHeight))
-    }
+    this.newTy = Math.max(0, Math.min(distnceY, this.height + this.ty - this.options.minHeight))
 
     if (this.options.square) {
       if (this.newHeight >= this.pWidth - this.tx) {
         this.newHeight = this.pWidth - this.tx
       }
       this.newWidth = this.newHeight
-      const minDistanceY = this.ty + this.height - this.newHeight;
-      this.newTy = Math.max(minDistanceY, Math.min(distnceY, this.height + this.ty - this.newHeight))
+      this.newTy = this.ty + this.height - this.newHeight;
     }
   }
 
   // 向下进行缩放操作
   bottomZoom(e) {
     const nHeight = this.height + (e.clientY - this.startY)
-
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.pHeight - this.ty))
+
     if (this.options.square) {
       if (this.newHeight >= this.pWidth - this.tx) {
         this.newHeight = this.pWidth - this.tx
@@ -367,23 +359,19 @@ class ZoomAndDrag {
 
   // 左上角进行缩放操作
   leftTopZoom(e) {
-    const nWidth = this.width - (e.clientX - this.startX)
-    const nHeight = this.height - (e.clientY - this.startY)
-
+    const nWidth = this.width + (this.startX - e.clientX)
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
-    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
-
     const distnceX = this.tx + (e.clientX - this.startX)
+    this.newTx = Math.max(0, Math.min(distnceX, this.width + this.tx - this.options.minWidth))
+
+    const nHeight = this.height - (e.clientY - this.startY)
+    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
     const distnceY = this.ty + (e.clientY - this.startY)
-    if(!this.options.square) {
-      this.newTx = Math.max(0, Math.min(distnceX, this.width + this.tx - this.options.minWidth))
-      this.newTy = Math.max(0, Math.min(distnceY, this.height + this.ty - this.options.minHeight))
-    }
+    this.newTy = Math.max(0, Math.min(distnceY, this.height + this.ty - this.options.minHeight))
     
     if(this.options.square) {
       const maxHeight = this.height + this.ty
-      const maxWidth = this.pWidth - this.tx
-      console.log(maxHeight, maxWidth);
+      const maxWidth = this.width + this.tx
       if (this.newWidth >= maxHeight) {
         this.newWidth = maxHeight
       }
@@ -391,36 +379,32 @@ class ZoomAndDrag {
         this.newHeight = maxWidth
       }
       this.newHeight = this.newWidth = Math.min(maxHeight, maxWidth, this.newWidth, this.newHeight)
-      const minDistanceX = this.tx + this.width - this.newWidth;
-      const minDistanceY = this.ty + this.height - this.newHeight;
-      this.newTx = Math.max(minDistanceX, Math.min(distnceX, this.width + this.tx - this.newWidth))
-      this.newTy = Math.max(minDistanceY, Math.min(distnceY, this.height + this.ty - this.newHeight))
+      this.newTx = this.tx + this.width - this.newWidth;
+      this.newTy = this.ty + this.height - this.newHeight;
     }
   }
 
   // 左下角进行缩放操作
   leftBottomZoom(e) {
     const nWidth = this.width - (e.clientX - this.startX)
-    const nHeight = this.height + (e.clientY - this.startY)
-    
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
-    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.pHeight - this.ty))
-
     const distnceX = this.tx + (e.clientX - this.startX)
-    if(!this.options.square) {
-      this.newTx = Math.max(0, Math.min(distnceX, this.width + this.tx - this.options.minWidth))
-    }
+    this.newTx = Math.max(0, Math.min(distnceX, this.width + this.tx - this.options.minWidth))
+    
+    const nHeight = this.height + (e.clientY - this.startY)
+    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.pHeight - this.ty))
     
     if(this.options.square) {
-      if (this.newWidth >= this.pHeight - this.ty) {
-        this.newWidth = this.pHeight - this.ty
+      const maxHeight = this.height + this.ty
+      const maxWidth = this.width + this.tx
+      if (this.newWidth >= maxHeight) {
+        this.newWidth = maxHeight
       }
-      if (this.newHeight >= this.pWidth - this.tx) {
-        this.newHeight = this.pWidth - this.tx
+      if (this.newHeight >= maxWidth) {
+        this.newHeight = maxWidth
       }
-      this.newWidth = this.newHeight = Math.max(this.newWidth, this.newHeight)
-      const minDistanceX = this.tx + this.width - this.newWidth;
-      this.newTx = Math.max(minDistanceX, Math.min(distnceX, this.width + this.tx - this.newWidth))
+      this.newHeight = this.newWidth = Math.min(maxHeight, maxWidth, this.newWidth, this.newHeight)
+      this.newTx = this.tx + this.width - this.newWidth;
     }
   }
 
