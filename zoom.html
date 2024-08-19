@@ -232,8 +232,7 @@ class Zoom {
     const nWidth = this.width + (this.startX - e.clientX)
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.tx + this.width))
 
-    const distnceX = this.tx + (e.clientX - this.startX)
-    this.newTx = Math.max(0, Math.min(distnceX, this.tx + (this.width - this.options.minWidth)))
+    this.newTx = this.tx + this.width - this.newWidth;
   }
   // 向右进行缩放操作
   rightZoom(e) {
@@ -245,8 +244,7 @@ class Zoom {
     const nHeight = this.height + (this.startY - e.clientY)
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
 
-    const distnceY = this.ty + (e.clientY - this.startY)
-    this.newTy = Math.max(0, Math.min(distnceY, this.ty + (this.height - this.options.minHeight)))
+    this.newTy = this.ty + this.height - this.newHeight;
   }
   // 向下进行缩放操作
   bottomZoom(e) {
