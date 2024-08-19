@@ -171,7 +171,6 @@ class ZoomAndDrag {
     this.options = { ...options, ...this.options }
     this.init()
   }
-
   init(){
     this.target.style.position = "absolute"
     if(!this.target.style.transform) {
@@ -186,7 +185,6 @@ class ZoomAndDrag {
       this.zoom(node)
     })
   }
-
   // 获取目标元素的初始宽高、偏移以及鼠标的起始位置信息
   getInfo(e) {
     this.getSelfInfo()
@@ -210,7 +208,6 @@ class ZoomAndDrag {
     this.ty = translateDistance.y
     this.newTy = this.ty
   }
-
   // 获取目标元素当前的的偏移数据
   getTranslateDistance() {
     let translateStr = this.target.style.transform
@@ -222,13 +219,11 @@ class ZoomAndDrag {
       y: +translateArr[1]
     }
   }
-
   // 获取父元素的宽高
   getBoundary() {
     this.pWidth = this.target.parentNode.clientWidth
     this.pHeight = this.target.parentNode.clientHeight
   }
-
   // 拖动实现
   drag() {
     this.target.addEventListener("mousedown", (e) => {
@@ -243,7 +238,6 @@ class ZoomAndDrag {
       }
     })
   }
-
   // 为拖动元素添加事件
   zoom(node) {
     this[node].addEventListener("mousedown", (e) => {
@@ -260,7 +254,6 @@ class ZoomAndDrag {
       }
     })
   }
-
   // 裁剪
   crop() {
     return new Promise((resolve, reject) => {
@@ -297,21 +290,24 @@ class ZoomAndDrag {
       this.target.append(this[node])
     })
   }
-  // 向左进行缩放操作
-  leftZoom(e) {
+
+  leftZoom(e, maxHeight = this.pHeight - this.ty) {
     const nWidth = this.width + (this.startX - e.clientX)
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
 
     if(this.options.square) {
-      if(this.newWidth >= this.pHeight - this.ty) {
-        this.newWidth = this.pHeight - this.ty
+      if(this.newWidth >= maxHeight) {
+        this.newWidth = maxHeight
       }
       this.newHeight = this.newWidth
     }
     this.newTx = this.tx + this.width - this.newWidth;
+    // 因为宽高会相互影响，所以需要将偏移的修改放在最后
+    if(maxHeight === this.height + this.ty) {
+      this.newTy = this.ty + this.height - this.newHeight;
+    }
   }
 
-  // 向右进行缩放操作
   rightZoom(e) {
     const nWidth = this.width + (e.clientX - this.startX)
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.pWidth - this.tx))
@@ -324,86 +320,58 @@ class ZoomAndDrag {
     }
   }
 
-  // 向上进行缩放操作
-  topZoom(e) {
+  topZoom(e, maxWidth = this.pWidth - this.tx) {
     const nHeight = this.height + (this.startY - e.clientY)
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
 
     if (this.options.square) {
-      if (this.newHeight >= this.pWidth - this.tx) {
-        this.newHeight = this.pWidth - this.tx
+      if (this.newHeight >= maxWidth) {
+        this.newHeight = maxWidth
       }
       this.newWidth = this.newHeight
     }
-    this.newTy = this.ty + this.height - this.newHeight;
+    // 因为宽高会相互影响，偏移的修改放在 leftZoom 方法中
+    if(maxWidth !== this.width + this.tx) {
+      this.newTy = this.ty + this.height - this.newHeight;
+    }
   }
 
-  // 向下进行缩放操作
-  bottomZoom(e) {
+  bottomZoom(e, maxWidth = this.pWidth - this.tx) {
     const nHeight = this.height + (e.clientY - this.startY)
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.pHeight - this.ty))
 
     if (this.options.square) {
-      if (this.newHeight >= this.pWidth - this.tx) {
-        this.newHeight = this.pWidth - this.tx
+      if (this.newHeight >= maxWidth) {
+        this.newHeight = maxWidth
       }
       this.newWidth = this.newHeight
     }
   }
 
-  // 左上角进行缩放操作
   leftTopZoom(e) {
-    const nWidth = this.width + (this.startX - e.clientX)
-    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
-
-    const nHeight = this.height - (e.clientY - this.startY)
-    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
-    
-    if(this.options.square) {
-      const maxHeight = this.height + this.ty
-      const maxWidth = this.width + this.tx
-      if (this.newWidth >= maxHeight) {
-        this.newWidth = maxHeight
-      }
-      if (this.newHeight >= maxWidth) {
-        this.newHeight = maxWidth
-      }
-      this.newHeight = this.newWidth = Math.min(maxHeight, maxWidth, this.newWidth, this.newHeight)
-    }
-    this.newTx = this.tx + this.width - this.newWidth;
-    this.newTy = this.ty + this.height - this.newHeight;
+    const maxHeight = this.height + this.ty
+    const maxWidth = this.width + this.tx
+    // 注意调用顺序
+    this.topZoom(e, maxWidth)
+    this.leftZoom(e, maxHeight)
   }
 
-  // 左下角进行缩放操作
   leftBottomZoom(e) {
-    const nWidth = this.width - (e.clientX - this.startX)
-    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
-    
-    const nHeight = this.height + (e.clientY - this.startY)
-    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.pHeight - this.ty))
-    
-    if(this.options.square) {
-      const maxHeight = this.height + this.ty
-      const maxWidth = this.width + this.tx
-      if (this.newWidth >= maxHeight) {
-        this.newWidth = maxHeight
-      }
-      if (this.newHeight >= maxWidth) {
-        this.newHeight = maxWidth
-      }
-      this.newHeight = this.newWidth = Math.min(maxHeight, maxWidth, this.newWidth, this.newHeight)
-    }
-    this.newTx = this.tx + this.width - this.newWidth;
+    const maxHeight = this.pHeight - this.ty
+    const maxWidth = this.width + this.tx
+    // 注意调用顺序
+    this.bottomZoom(e, maxWidth)
+    this.leftZoom(e, maxHeight)
   }
 
-  // 右上角进行缩放操作
   rightTopZoom(e) {
+    // 注意调用顺序
     this.rightZoom(e)
     this.topZoom(e)
   }
 
-  // 右下角进行缩放操作
   rightBottomZoom(e) {
+    // 注意调用顺序
     this.rightZoom(e)
     this.bottomZoom(e)
   }
