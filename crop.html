@@ -83,7 +83,15 @@
       bottom: -3px;
     }
     /* 上下两侧样式 end */
-    
+    .drop {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100px;
+      height: 100px;
+      border: 1px solid #5864f6;
+      z-index: 100;
+    }
   </style>
   <style>
     .cut-container {
@@ -94,13 +102,7 @@
       user-select: none;
       font-size: 0;
     }
-    #select-box {
-      width: 100px;
-      height: 100px;
-      border: 1px solid #5864f6;
-      display: none;
-      z-index: 100;
-    }
+
     img {
       -webkit-user-drag: none;
     }
@@ -109,21 +111,21 @@
 <body>
   <div class="cut-container">
     <img src="https://picsum.photos/200/300">
-    <div id="select-box"></div>
+    <div id="drop"></div>
   </div>
   <button type="button" id="crop-btn">裁剪</button>
 </body>
 <script>
 
 const img = document.querySelector('img');
-const selectBox = document.querySelector('#select-box');
+const drop = document.querySelector('#drop');
 const cropBtn = document.querySelector('#crop-btn');
 
 let dropIns = null
 // 图片加载完成
 img.addEventListener('load', () => {
-  selectBox.style.display = 'block';
-  dropIns = new ZoomAndDrag(selectBox, img)
+  console.log(1)
+  dropIns = new ZoomAndDrag(drop, img)
 });
 
 
@@ -179,11 +181,8 @@ class ZoomAndDrag {
   }
   initStyle() {
       this.target.parentNode.style.position = 'relative';
-      this.img.crossorigin = 'anonymous';
-      this.target.style.position = 'absolute';
-      this.target.style.left = '0px';
-      this.target.style.top = '0px';
-      this.target.style.cursor = 'move';
+      this.img.crossOrigin = 'anonymous';
+      this.target.classList.add('drop')
       if(!this.target.style.transform) {
           this.target.style.transform = 'translate(0px,0px)';
       }
