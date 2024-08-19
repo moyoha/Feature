@@ -98,9 +98,7 @@
       width: 100px;
       height: 100px;
       border: 1px solid #5864f6;
-      position: absolute;
       display: none;
-      cursor: move;
       z-index: 100;
     }
     img {
@@ -110,7 +108,7 @@
 </head>
 <body>
   <div class="cut-container">
-    <img src="./assets/imgs/3.jpeg" crossorigin="anonymous">
+    <img src="https://picsum.photos/200/300">
     <div id="select-box"></div>
   </div>
   <button type="button" id="crop-btn">裁剪</button>
@@ -125,9 +123,6 @@ let dropIns = null
 // 图片加载完成
 img.addEventListener('load', () => {
   selectBox.style.display = 'block';
-  // 把区域选择框放到 img 上
-  selectBox.style.top = img.offsetTop + 'px';
-  selectBox.style.left = img.offsetLeft + 'px';
   dropIns = new ZoomAndDrag(selectBox, img)
 });
 
@@ -172,10 +167,7 @@ class ZoomAndDrag {
     this.init()
   }
   init(){
-    this.target.style.position = "absolute"
-    if(!this.target.style.transform) {
-      this.target.style.transform = "translate(0px,0px)"
-    }
+    this.initStyle()
     // 初始化时需获取元素自身信息，避免直接进行裁剪操作时，数据为空
     this.getSelfInfo()
     this.getBoundary()
@@ -185,6 +177,17 @@ class ZoomAndDrag {
       this.zoom(node)
     })
   }
+  initStyle() {
+      this.target.parentNode.style.position = 'relative';
+      this.img.crossorigin = 'anonymous';
+      this.target.style.position = 'absolute';
+      this.target.style.left = '0px';
+      this.target.style.top = '0px';
+      this.target.style.cursor = 'move';
+      if(!this.target.style.transform) {
+          this.target.style.transform = 'translate(0px,0px)';
+      }
+    }
   // 获取目标元素的初始宽高、偏移以及鼠标的起始位置信息
   getInfo(e) {
     this.getSelfInfo()
