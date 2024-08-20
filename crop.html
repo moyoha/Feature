@@ -85,6 +85,7 @@
     /* 上下两侧样式 end */
     .drop {
       position: absolute;
+      display: none;
       left: 0;
       top: 0;
       width: 100px;
@@ -116,10 +117,9 @@ const cropBtn = document.querySelector('#crop-btn');
 
 let dropIns = null
 // 图片加载完成
-img.addEventListener('load', () => {
-  console.log(1)
-  dropIns = new ZoomAndDrag(drop, img)
-});
+// img.addEventListener('load', () => {
+  
+// });
 
 
 // 图片裁剪按钮点击
@@ -215,21 +215,25 @@ class ZoomAndDrag {
   }
   // 获取父元素的宽高
   getBoundary() {
-    this.pWidth = this.target.parentNode.clientWidth
-    this.pHeight = this.target.parentNode.clientHeight
+    this.img.addEventListener('load', () => {
+      this.pWidth = this.target.parentNode.clientWidth
+      this.pHeight = this.target.parentNode.clientHeight
+      this.target.style.display = 'block'
+    });
   }
   // 拖动实现
   drag() {
     this.target.addEventListener("mousedown", (e) => {
       this.getInfo(e)
-      document.onmousemove = (e) => {
+      const handleMove = (e) => {
         this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
         this.newTy = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height))
         this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`
       }
-      document.onmouseup = () => {
-        document.onmousemove = null
-      }
+      document.addEventListener("mousemove", handleMove)
+      document.addEventListener("mouseup", () => {
+        document.removeEventListener("mousemove", handleMove)
+      })
     })
   }
   // 为拖动元素添加事件
@@ -237,15 +241,16 @@ class ZoomAndDrag {
     this[node].addEventListener("mousedown", (e) => {
       e.stopPropagation()
       this.getInfo(e)
-      document.onmousemove = (e) => {
+      const handleZoom = (e) => {
         this[`${node}Zoom`](e)
         this.target.style.width = `${this.newWidth}px`
         this.target.style.height = `${this.newHeight}px`
         this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`
       }
-      document.onmouseup = () => {
-        document.onmousemove = null
-      }
+      document.addEventListener("mousemove", handleZoom)
+      document.addEventListener("mouseup", () => {
+        document.removeEventListener("mousemove", handleZoom)
+      })
     })
   }
   // 裁剪
@@ -371,5 +376,6 @@ class ZoomAndDrag {
   }
 }
 
+dropIns = new ZoomAndDrag(drop, img)
 </script>
 </html>
