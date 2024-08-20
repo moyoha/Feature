@@ -92,25 +92,18 @@
       border: 1px solid #5864f6;
       z-index: 100;
     }
-  </style>
-  <style>
-    .cut-container {
-      margin: 100px;
+    .drop-container {
       position: relative;
       width: fit-content;
       height: fit-content;
       user-select: none;
       font-size: 0;
     }
-
-    img {
-      -webkit-user-drag: none;
-    }
   </style>
 </head>
 <body>
-  <div class="cut-container">
-    <img src="https://picsum.photos/200/300">
+  <div>
+    <img src="https://picsum.photos/200/300" crossorigin="anonymous">
     <div id="drop"></div>
   </div>
   <button type="button" id="crop-btn">裁剪</button>
@@ -180,8 +173,7 @@ class ZoomAndDrag {
     })
   }
   initStyle() {
-      this.target.parentNode.style.position = 'relative';
-      this.img.crossOrigin = 'anonymous';
+      this.target.parentNode.classList.add('drop-container')
       this.target.classList.add('drop')
       if(!this.target.style.transform) {
           this.target.style.transform = 'translate(0px,0px)';
