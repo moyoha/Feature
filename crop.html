@@ -101,10 +101,20 @@
       font-size: 0;
     }
   </style>
+  <style>
+    img {
+      min-width: 96px;
+      min-height: 96px;
+      max-width: 552px;
+      max-height: 260px;
+      -webkit-user-drag: none;
+    }
+  </style>
 </head>
 <body>
   <div>
-    <img src="https://picsum.photos/200/300" crossorigin="anonymous">
+    <!-- <img src="https://picsum.photos/200/300" crossorigin="anonymous"> -->
+    <img src="./assets/imgs/2.jpeg" crossorigin="anonymous">
     <div id="drop"></div>
   </div>
   <button type="button" id="crop-btn">裁剪</button>
@@ -150,7 +160,7 @@ class ZoomAndDrag {
   newTx = 0 // 目标元素缩放、移动后在 X 轴上的偏移
   newTy = 0 // 目标元素缩放、移动后在 Y 轴上的偏移
   // 配置项 minWidth：缩放的最小宽度，minHeight：缩放最小高度，squre: 缩放后是否保持宽高比
-  options = { minWidth: 50, minHeight: 50, square: true }
+  options = { minWidth: 96, minHeight: 96, square: true }
   target = null // 目标元素
   img = null // 图片元素
   dragNodes = [] // 缩放节点
@@ -164,7 +174,10 @@ class ZoomAndDrag {
   init(){
     this.initStyle()
     // 初始化时需获取元素自身信息，避免直接进行裁剪操作时，数据为空
-    this.getSelfInfo()
+    this.img.addEventListener('load', () => {
+      this.target.style.display = 'block'
+      this.getSelfInfo()
+    });
     this.getBoundary()
     this.drag()
     this.addZoomEl()
@@ -218,7 +231,6 @@ class ZoomAndDrag {
     this.img.addEventListener('load', () => {
       this.pWidth = this.target.parentNode.clientWidth
       this.pHeight = this.target.parentNode.clientHeight
-      this.target.style.display = 'block'
     });
   }
   // 拖动实现
@@ -257,10 +269,13 @@ class ZoomAndDrag {
   crop() {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement("canvas")
-      canvas.width = this.newWidth
-      canvas.height = this.newHeight
+      const { naturalWidth, naturalHeight, width, height } = this.img;
+      const rateX = +(naturalWidth / width).toFixed(1);
+      const rateY = +(naturalHeight / height).toFixed(1);
+      canvas.width = this.newWidth * rateX
+      canvas.height = this.newHeight * rateY
       const ctx = canvas.getContext("2d")
-      ctx.drawImage(this.img, this.newTx, this.newTy, this.newWidth, this.newHeight, 0, 0, this.newWidth, this.newHeight)
+      ctx.drawImage(this.img, this.newTx * rateX, this.newTy * rateY, this.newWidth * rateX, this.newHeight * rateY, 0, 0, this.newWidth * rateX, this.newHeight * rateY)
       canvas.toBlob(blob => {
         if (blob === null) {
           reject("图片裁剪失败")
