@@ -1,0 +1,23 @@
+{
+  "name": "feature",
+  "version": "1.0.0",
+  "description": "记录常见功能的代码库",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moyoha/Feature.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/moyoha/Feature/issues"
+  },
+  "homepage": "https://github.com/moyoha/Feature#readme",
+  "dependencies": {
+    "dayjs": "^1.11.13"
+  }
+}
