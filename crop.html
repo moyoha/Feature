@@ -99,6 +99,18 @@
       height: fit-content;
       user-select: none;
       font-size: 0;
+      margin: 100px;
+    }
+    #border {
+      box-sizing: content-box;
+      position: absolute;
+      display: none;
+      left: 0;
+      top: 0;
+      width: 100px;
+      height: 100px;
+      border-color: rgba(0, 0, 0, 0.5);
+      border-style: solid;
     }
   </style>
   <style>
@@ -116,6 +128,7 @@
     <!-- <img src="https://picsum.photos/200/300" crossorigin="anonymous"> -->
     <img src="./assets/imgs/2.jpeg" crossorigin="anonymous">
     <div id="drop"></div>
+    <div id="border"></div>
   </div>
   <button type="button" id="crop-btn">裁剪</button>
 </body>
@@ -123,6 +136,7 @@
 
 const img = document.querySelector('img');
 const drop = document.querySelector('#drop');
+const border = document.querySelector('#border');
 const cropBtn = document.querySelector('#crop-btn');
 
 let dropIns = null
@@ -146,7 +160,7 @@ cropBtn.addEventListener('click', async () => {
  * 2. 父元素若存在内边距，那么目标元素在移动时也会超出父元素
  */
 
-class ZoomAndDrag {
+class Crop {
   width = 0 // 目标元素宽度
   height = 0 // 目标元素高度
   pWidth = 0 // 目标父元素宽度
@@ -164,9 +178,13 @@ class ZoomAndDrag {
   target = null // 目标元素
   img = null // 图片元素
   dragNodes = [] // 缩放节点
-  constructor(target, img, options = {}, dragNodes = ['left', 'right', 'top', 'bottom', 'leftTop', 'leftBottom', 'rightTop', 'rightBottom']) {
+  pNode = null // 父元素
+  border = null // 边框元素 即阴影
+  constructor(target, img, border, options = {}, dragNodes = ['left', 'right', 'top', 'bottom', 'leftTop', 'leftBottom', 'rightTop', 'rightBottom']) {
     this.target = target
+    this.pNode = target.parentNode
     this.img = img
+    this.border = border
     this.dragNodes = dragNodes
     this.options = { ...options, ...this.options }
     this.init()
@@ -176,6 +194,7 @@ class ZoomAndDrag {
     // 初始化时需获取元素自身信息，避免直接进行裁剪操作时，数据为空
     this.img.addEventListener('load', () => {
       this.target.style.display = 'block'
+      this.border.style.display = 'block'
       this.getSelfInfo()
     });
     this.getBoundary()
@@ -226,12 +245,24 @@ class ZoomAndDrag {
       y: +translateArr[1]
     }
   }
-  // 获取父元素的宽高
+  // 获取父元素的宽高, 计算边框的宽高
   getBoundary() {
     this.img.addEventListener('load', () => {
       this.pWidth = this.target.parentNode.clientWidth
       this.pHeight = this.target.parentNode.clientHeight
+      this.calcBorder()
     });
+  }
+  calcBorder() {
+    const cropPosition = this.target.getBoundingClientRect()
+    const parentPosition = this.pNode.getBoundingClientRect()
+
+    this.border.style.width = `${cropPosition.width}px`;
+    this.border.style.height = `${cropPosition.height}px`;
+    this.border.style['border-top-width'] = `${cropPosition.top - parentPosition.top}px`;
+    this.border.style['border-bottom-width'] = `${parentPosition.bottom - cropPosition.bottom}px`;
+    this.border.style['border-left-width'] = `${cropPosition.left - parentPosition.left}px`;
+    this.border.style['border-right-width'] = `${parentPosition.right - cropPosition.right}px`;
   }
   // 拖动实现
   drag() {
@@ -241,6 +272,7 @@ class ZoomAndDrag {
         this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
         this.newTy = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height))
         this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`
+        this.calcBorder()
       }
       document.addEventListener("mousemove", handleMove)
       document.addEventListener("mouseup", () => {
@@ -258,6 +290,7 @@ class ZoomAndDrag {
         this.target.style.width = `${this.newWidth}px`
         this.target.style.height = `${this.newHeight}px`
         this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`
+        this.calcBorder()
       }
       document.addEventListener("mousemove", handleZoom)
       document.addEventListener("mouseup", () => {
@@ -391,6 +424,6 @@ class ZoomAndDrag {
   }
 }
 
-dropIns = new ZoomAndDrag(drop, img)
+dropIns = new Crop(drop, img, border)
 </script>
 </html>
