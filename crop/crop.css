@@ -1,0 +1,111 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+/* 四个角的样式 start */
+.crop-horn {
+  width: 8px;
+  height: 8px;
+  background-color: #fff;
+  position: absolute;
+  border: 1px solid #dbdbdb;
+  border-radius: 50%;
+}
+.crop-leftTop {
+  cursor: nw-resize;
+  left: -4px;
+  top: -4px;
+}
+
+.crop-rightTop {
+  cursor: ne-resize;
+  right: -4px;
+  top: -4px;
+}
+
+.crop-leftBottom {
+  cursor: sw-resize;
+  bottom: -4px;
+  left: -4px;
+}
+
+.crop-rightBottom {
+  cursor: se-resize;
+  right: -4px;
+  bottom: -4px;
+}
+/* 四个角的样式 end */
+
+/* 左右两侧样式 start */
+.crop-vertical {
+  width: 6px;
+  height: 12px;
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #dbdbdb;
+  border-radius: 3px;
+  cursor: col-resize;
+}
+.crop-left {
+  top: calc(50% - 6px);
+  left: -3px;
+}
+.crop-right {
+  top: calc(50% - 6px);
+  right: -3px;
+}
+/* 左右两侧样式 end */
+
+/* 上下两侧样式 start */
+.crop-horizontal {
+  width: 12px;
+  height: 6px;
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #dbdbdb;
+  border-radius: 3px;
+  cursor: row-resize;
+}
+.crop-top {
+  top: -3px;
+  left: calc(50% - 6px);
+}
+
+.crop-bottom {
+  left: calc(50% - 6px);
+  bottom: -3px;
+}
+/* 上下两侧样式 end */
+
+.crop {
+  position: absolute;
+  display: none;
+  left: 0;
+  top: 0;
+  width: 100px;
+  height: 100px;
+  border: 1px solid #5864f6;
+  z-index: 100;
+}
+
+.crop-container {
+  position: relative;
+  width: fit-content;
+  height: fit-content;
+  user-select: none;
+  font-size: 0;
+  margin: 100px;
+}
+
+#border {
+  box-sizing: content-box;
+  position: absolute;
+  display: none;
+  left: 0;
+  top: 0;
+  width: 100px;
+  height: 100px;
+  border-color: rgba(0, 0, 0, 0.5);
+  border-style: solid;
+}
