@@ -214,7 +214,7 @@ class Crop {
       this.newHeight = this.newWidth
     }
     this.newTx = this.tx + this.width - this.newWidth;
-    // 因为宽高会相互影响，所以需要将偏移的修改放在最后
+    // 在进行对角缩放时，因为宽高会相互影响，所以需要将偏移的修改放在最后
     if(maxHeight === this.height + this.ty) {
       this.newTy = this.ty + this.height - this.newHeight;
     }
@@ -242,7 +242,7 @@ class Crop {
       }
       this.newWidth = this.newHeight
     }
-    // 因为宽高会相互影响，偏移的修改放在 leftZoom 方法中
+    // 在进行对角缩放时，因为宽高会相互影响，偏移的修改放在 leftZoom 方法中
     if(maxWidth !== this.width + this.tx) {
       this.newTy = this.ty + this.height - this.newHeight;
     }
