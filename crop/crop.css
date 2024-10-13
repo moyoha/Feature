@@ -98,7 +98,7 @@
   margin: 100px;
 }
 
-#border {
+.crop-border {
   box-sizing: content-box;
   position: absolute;
   display: none;

@@ -19,34 +19,10 @@
   <div>
     <!-- <img src="https://picsum.photos/200/300" crossorigin="anonymous"> -->
     <img src="../assets/imgs/2.jpeg" crossorigin="anonymous">
-    <div id="crop"></div>
-    <div id="border"></div>
   </div>
   <button type="button" id="crop-btn">裁剪</button>
 </body>
 <script>
-
-const img = document.querySelector('img');
-const crop = document.querySelector('#crop');
-const border = document.querySelector('#border');
-const cropBtn = document.querySelector('#crop-btn');
-
-let cropIns = null
-// 图片加载完成
-// img.addEventListener('load', () => {
-  
-// });
-
-
-// 图片裁剪按钮点击
-cropBtn.addEventListener('click', async () => {
-  const {blob, url} = await cropIns.crop()
-  const img = document.createElement('img')
-  img.src = url
-  document.body.append(img)
-});
-
-
 /** 注意事项 
  * 1. 目标元素若存在外边距，那么目标元素在移动时会超出父元素(定位同理)
  * 2. 父元素若存在内边距，那么目标元素在移动时也会超出父元素
@@ -65,68 +41,73 @@ class Crop {
   ty = 0 // 目标元素在 Y 轴上的初始偏移
   newTx = 0 // 目标元素缩放、移动后在 X 轴上的偏移
   newTy = 0 // 目标元素缩放、移动后在 Y 轴上的偏移
-  // 配置项 minWidth：缩放的最小宽度，minHeight：缩放最小高度，squre: 缩放后是否保持宽高比
-  options = { minWidth: 96, minHeight: 96, square: true }
-  target = null // 目标元素
+  // 配置项 minWidth：缩放的最小宽度，minHeight：缩放最小高度，rate: 宽/高
+  options = { minWidth: 96, minHeight: 96, rate: 1 }
+  target = null // 裁剪元素
   img = null // 图片元素
   dragNodes = [] // 缩放节点
   pNode = null // 父元素
   border = null // 边框元素 即阴影
-  constructor(target, img, border, options = {}, dragNodes = ['left', 'right', 'top', 'bottom', 'leftTop', 'leftBottom', 'rightTop', 'rightBottom']) {
-    this.target = target
-    this.pNode = target.parentNode
+  constructor(img, options = {}, dragNodes = ['left', 'right', 'top', 'bottom', 'leftTop', 'leftBottom', 'rightTop', 'rightBottom']) {
     this.img = img
-    this.border = border
+    this.pNode = img.parentNode
+    this.pNode.classList.add('crop-container')
     this.dragNodes = dragNodes
     this.options = { ...options, ...this.options }
     this.init()
   }
   init(){
-    this.initStyle()
+    // 添加裁剪元素
+    const target = document.createElement('div');
+    target.classList.add('crop')
+    target.style.transform = 'translate(0px,0px)';
+    this.pNode.append(target)
+    this.target = target
+    // 添加阴影
+    const border = document.createElement('div');
+    border.classList.add('crop-border');
+    this.pNode.append(border)
+    this.border = border
     // 初始化时需获取元素自身信息，避免直接进行裁剪操作时，数据为空
     this.img.addEventListener('load', () => {
       this.target.style.display = 'block'
       this.border.style.display = 'block'
+      // 获取父元素的宽高, 计算初始边框的宽高
+      this.pWidth = this.pNode.clientWidth
+      this.pHeight = this.pNode.clientHeight
+      this.calcBorder()
+
       this.getSelfInfo()
     });
-    this.getBoundary()
     this.drag()
     this.addZoomEl()
     this.dragNodes.forEach((node) => {
       this.zoom(node)
     })
   }
-  initStyle() {
-      this.target.parentNode.classList.add('crop-container')
-      this.target.classList.add('crop')
-      if(!this.target.style.transform) {
-          this.target.style.transform = 'translate(0px,0px)';
-      }
-    }
-  // 获取目标元素的初始宽高、偏移以及鼠标的起始位置信息
+  // 获取裁剪元素的宽高、偏移以及鼠标的起始位置信息
   getInfo(e) {
     this.getSelfInfo()
 
     this.startX = e.clientX
     this.startY = e.clientY
   }
+  // 获取裁剪元素的宽高、偏移
   getSelfInfo() {
     this.width = this.target.offsetWidth
     this.height = this.target.offsetHeight
     this.newWidth = this.width
-    if (this.options.square) {
+    if (this.options.rate) {
       this.newHeight = this.newWidth
     } else {
       this.newHeight = this.height
     }
 
     const translateDistance = this.getTranslateDistance()
-    this.tx = translateDistance.x
-    this.newTx = this.tx
-    this.ty = translateDistance.y
-    this.newTy = this.ty
+    this.newTx = this.tx = translateDistance.x
+    this.newTy = this.ty = translateDistance.y
   }
-  // 获取目标元素当前的的偏移数据
+  // 获取裁剪元素当前的的偏移数据
   getTranslateDistance() {
     let translateStr = this.target.style.transform
     const reg = /\d+/g
@@ -137,24 +118,16 @@ class Crop {
       y: +translateArr[1]
     }
   }
-  // 获取父元素的宽高, 计算边框的宽高
-  getBoundary() {
-    this.img.addEventListener('load', () => {
-      this.pWidth = this.target.parentNode.clientWidth
-      this.pHeight = this.target.parentNode.clientHeight
-      this.calcBorder()
-    });
-  }
   calcBorder() {
-    const cropPosition = this.target.getBoundingClientRect()
-    const parentPosition = this.pNode.getBoundingClientRect()
+    const cropInfo = this.target.getBoundingClientRect()
+    const parentInfo = this.pNode.getBoundingClientRect()
 
-    this.border.style.width = `${cropPosition.width}px`;
-    this.border.style.height = `${cropPosition.height}px`;
-    this.border.style['border-top-width'] = `${cropPosition.top - parentPosition.top}px`;
-    this.border.style['border-bottom-width'] = `${parentPosition.bottom - cropPosition.bottom}px`;
-    this.border.style['border-left-width'] = `${cropPosition.left - parentPosition.left}px`;
-    this.border.style['border-right-width'] = `${parentPosition.right - cropPosition.right}px`;
+    this.border.style.width = `${cropInfo.width}px`;
+    this.border.style.height = `${cropInfo.height}px`;
+    this.border.style['border-top-width'] = `${cropInfo.top - parentInfo.top}px`;
+    this.border.style['border-bottom-width'] = `${parentInfo.bottom - cropInfo.bottom}px`;
+    this.border.style['border-left-width'] = `${cropInfo.left - parentInfo.left}px`;
+    this.border.style['border-right-width'] = `${parentInfo.right - cropInfo.right}px`;
   }
   // 拖动实现
   drag() {
@@ -234,7 +207,7 @@ class Crop {
     const nWidth = this.width + (this.startX - e.clientX)
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
 
-    if(this.options.square) {
+    if(this.options.rate) {
       if(this.newWidth >= maxHeight) {
         this.newWidth = maxHeight
       }
@@ -251,7 +224,7 @@ class Crop {
     const nWidth = this.width + (e.clientX - this.startX)
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.pWidth - this.tx))
 
-    if(this.options.square) {
+    if(this.options.rate) {
       if(this.newWidth >= this.pHeight - this.ty) {
         this.newWidth = this.pHeight - this.ty
       }
@@ -263,7 +236,7 @@ class Crop {
     const nHeight = this.height + (this.startY - e.clientY)
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
 
-    if (this.options.square) {
+    if (this.options.rate) {
       if (this.newHeight >= maxWidth) {
         this.newHeight = maxWidth
       }
@@ -279,7 +252,7 @@ class Crop {
     const nHeight = this.height + (e.clientY - this.startY)
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.pHeight - this.ty))
 
-    if (this.options.square) {
+    if (this.options.rate) {
       if (this.newHeight >= maxWidth) {
         this.newHeight = maxWidth
       }
@@ -316,6 +289,17 @@ class Crop {
   }
 }
 
-cropIns = new Crop(crop, img, border)
+const img = document.querySelector('img');
+let cropIns = new Crop(img)
+
+// 图片裁剪按钮点击
+const cropBtn = document.querySelector('#crop-btn');
+cropBtn.addEventListener('click', async () => {
+  const { blob, url } = await cropIns.crop()
+  const img = document.createElement('img')
+  img.src = url
+  document.body.append(img)
+});
+
 </script>
 </html>
