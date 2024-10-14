@@ -86,6 +86,22 @@ class Crop {
       this.zoom(node)
     })
   }
+  // 获取向上缩放的最大高度
+  getMaxHeightToTop() {
+    return this.height + this.ty;
+  }
+  // 获取向下缩放的最大高度
+  getMaxHeightToBottom() {
+    return this.pHeight - this.ty;
+  }
+  // 获取向左缩放的最大宽度
+  getMaxWidthToLeft() {
+    return this.width + this.tx;
+  }
+  // 获取向右缩放的最大宽度
+  getMaxWidthToRight() {
+    return this.pWidth - this.tx;
+  }
   // 获取裁剪元素的宽高、偏移以及鼠标的起始位置信息
   getInfo(e) {
     this.getSelfInfo()
@@ -144,9 +160,9 @@ class Crop {
       this.getInfo(e)
       const handleZoom = (e) => {
         this[`${node}Zoom`](e)
-        this.target.style.width = `${this.newWidth}px`
-        this.target.style.height = `${this.newHeight}px`
-        this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`
+        this.target.style.width = `${this.newWidth}px`;
+        this.target.style.height = `${this.newHeight}px`;
+        this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`;
         this.calcBorder()
       }
       document.addEventListener("mousemove", handleZoom)
@@ -195,10 +211,11 @@ class Crop {
     })
   }
 
-  leftZoom(e, maxHeight = this.pHeight - this.ty) {
+  leftZoom(e, isHorn = false) {
     const nWidth = this.width + (this.startX - e.clientX)
-    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
-
+    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.getMaxWidthToLeft()))
+    
+    const maxHeight = isHorn ? this.getMaxHeightToTop() : this.getMaxHeightToBottom();
     if(this.options.rate) {
       if(this.newWidth >= maxHeight * this.options.rate) {
         this.newWidth = maxHeight * this.options.rate
@@ -207,65 +224,61 @@ class Crop {
     }
     this.newTx = this.tx + this.width - this.newWidth;
     // 在进行对角缩放时，因为宽高会相互影响，所以需要将偏移的修改放在最后
-    if(maxHeight === this.height + this.ty) {
-      this.newTy = this.ty + this.height - this.newHeight;
+    if(isHorn) {
+      this.newTy = this.ty + (this.height - this.newHeight);
     }
   }
 
   rightZoom(e) {
     const nWidth = this.width + (e.clientX - this.startX)
-    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.pWidth - this.tx))
+    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.getMaxWidthToRight()))
 
     if(this.options.rate) {
-      if(this.newWidth >= (this.pHeight - this.ty) * this.options.rate) {
-        this.newWidth = (this.pHeight - this.ty) * this.options.rate
+      if(this.newWidth >= this.getMaxHeightToBottom() * this.options.rate) {
+        this.newWidth = this.getMaxHeightToBottom() * this.options.rate
       }
       this.newHeight = this.newWidth / this.options.rate
     }
   }
 
-  topZoom(e, maxWidth = this.pWidth - this.tx) {
+  topZoom(e, isHorn = false) {
     const nHeight = this.height + (this.startY - e.clientY)
-    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
+    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.getMaxHeightToTop()))
 
     if (this.options.rate) {
-      if (this.newHeight >= maxWidth / this.options.rate) {
-        this.newHeight = maxWidth / this.options.rate
+      if (this.newHeight >= this.getMaxWidthToRight() / this.options.rate) {
+        this.newHeight = this.getMaxWidthToRight() / this.options.rate
       }
       this.newWidth = this.newHeight * this.options.rate
     }
     // 在进行对角缩放时，因为宽高会相互影响，偏移的修改放在 leftZoom 方法中
-    if(maxWidth !== this.width + this.tx) {
-      this.newTy = this.ty + this.height - this.newHeight;
+    if(!isHorn) {
+      this.newTy = this.ty + (this.height - this.newHeight);
     }
   }
 
-  bottomZoom(e, maxWidth = this.pWidth - this.tx) {
+  bottomZoom(e) {
     const nHeight = this.height + (e.clientY - this.startY)
-    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.pHeight - this.ty))
+    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.getMaxHeightToBottom()))
 
     if (this.options.rate) {
-      if (this.newHeight >= maxWidth / this.options.rate) {
-        this.newHeight = maxWidth / this.options.rate
+      if (this.newHeight >= this.getMaxWidthToRight() / this.options.rate) {
+        this.newHeight = this.getMaxWidthToRight() / this.options.rate
       }
       this.newWidth = this.newHeight * this.options.rate
     }
   }
 
   leftTopZoom(e) {
-    const maxHeight = this.height + this.ty
-    const maxWidth = this.width + this.tx
     // 注意调用顺序
-    this.topZoom(e, maxWidth)
-    this.leftZoom(e, maxHeight)
+    this.topZoom(e, true)
+    this.leftZoom(e, true)
   }
 
   leftBottomZoom(e) {
-    const maxHeight = this.pHeight - this.ty
-    const maxWidth = this.width + this.tx
     // 注意调用顺序
-    this.bottomZoom(e, maxWidth)
-    this.leftZoom(e, maxHeight)
+    this.bottomZoom(e)
+    this.leftZoom(e)
   }
 
   rightTopZoom(e) {
