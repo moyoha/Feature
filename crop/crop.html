@@ -23,26 +23,21 @@
   <button type="button" id="crop-btn">裁剪</button>
 </body>
 <script>
-/** 注意事项 
- * 1. 目标元素若存在外边距，那么目标元素在移动时会超出父元素(定位同理)
- * 2. 父元素若存在内边距，那么目标元素在移动时也会超出父元素
- */
-
 class Crop {
-  width = 0 // 目标元素宽度
-  height = 0 // 目标元素高度
-  pWidth = 0 // 目标父元素宽度
-  pHeight = 0 // 目标父元素高度
-  newWidth = 0 // 目标元素缩放后的宽度
-  newHeight = 0 // 目标元素缩放后的高度
+  width = 0 // 裁剪元素宽度
+  height = 0 // 裁剪元素高度
+  pWidth = 0 // 裁剪父元素宽度
+  pHeight = 0 // 裁剪父元素高度
+  newWidth = 0 // 裁剪元素缩放后的宽度
+  newHeight = 0 // 裁剪元素缩放后的高度
   startX = 0 // 鼠标起始位置的 X 坐标
   startY = 0 // 鼠标起始位置的 Y 坐标
-  tx = 0 // 目标元素在 X 轴上的初始偏移
-  ty = 0 // 目标元素在 Y 轴上的初始偏移
-  newTx = 0 // 目标元素缩放、移动后在 X 轴上的偏移
-  newTy = 0 // 目标元素缩放、移动后在 Y 轴上的偏移
+  tx = 0 // 裁剪元素在 X 轴上的初始偏移
+  ty = 0 // 裁剪元素在 Y 轴上的初始偏移
+  newTx = 0 // 裁剪元素缩放、移动后在 X 轴上的偏移
+  newTy = 0 // 裁剪元素缩放、移动后在 Y 轴上的偏移
   // 配置项 minWidth：缩放的最小宽度，minHeight：缩放最小高度，rate: 宽/高
-  options = { minWidth: 96, minHeight: 96, rate: 1 }
+  options = { minWidth: 96, minHeight: 96, width: 100, rate: 4/5 }
   target = null // 裁剪元素
   img = null // 图片元素
   dragNodes = [] // 缩放节点
@@ -61,6 +56,12 @@ class Crop {
     const target = document.createElement('div');
     target.classList.add('crop')
     target.style.transform = 'translate(0px,0px)';
+    target.style.width = `${this.options.width}px`;
+    if(this.options.rate) {
+      target.style.height = `${this.options.width / this.options.rate}px`;
+    } else {
+      target.style.height = `${this.options.width}px`;
+    }
     this.pNode.append(target)
     this.target = target
     // 添加阴影
@@ -72,12 +73,12 @@ class Crop {
     this.img.addEventListener('load', () => {
       this.target.style.display = 'block'
       this.border.style.display = 'block'
-      // 获取父元素的宽高, 计算初始边框的宽高
+      // 获取父元素的宽高
       this.pWidth = this.pNode.clientWidth
       this.pHeight = this.pNode.clientHeight
-      this.calcBorder()
-
+      
       this.getSelfInfo()
+      this.calcBorder()
     });
     this.drag()
     this.addZoomEl()
@@ -94,24 +95,18 @@ class Crop {
   }
   // 获取裁剪元素的宽高、偏移
   getSelfInfo() {
-    this.width = this.target.offsetWidth
-    this.height = this.target.offsetHeight
-    this.newWidth = this.width
-    if (this.options.rate) {
-      this.newHeight = this.newWidth
-    } else {
-      this.newHeight = this.height
-    }
+    this.newWidth = this.width = this.target.offsetWidth;
+    this.newHeight = this.height = this.target.offsetHeight;
 
     const translateDistance = this.getTranslateDistance()
-    this.newTx = this.tx = translateDistance.x
-    this.newTy = this.ty = translateDistance.y
+    this.newTx = this.tx = translateDistance.x;
+    this.newTy = this.ty = translateDistance.y;
   }
   // 获取裁剪元素当前的的偏移数据
   getTranslateDistance() {
-    let translateStr = this.target.style.transform
-    const reg = /\d+/g
-    let translateArr = translateStr.match(reg)
+    let translateStr = this.target.style.transform;
+    const reg = /-?\d+(\.\d+)?/g;
+    let translateArr = translateStr.match(reg);
 
     return {
       x: +translateArr[0],
@@ -119,24 +114,21 @@ class Crop {
     }
   }
   calcBorder() {
-    const cropInfo = this.target.getBoundingClientRect()
-    const parentInfo = this.pNode.getBoundingClientRect()
-
-    this.border.style.width = `${cropInfo.width}px`;
-    this.border.style.height = `${cropInfo.height}px`;
-    this.border.style['border-top-width'] = `${cropInfo.top - parentInfo.top}px`;
-    this.border.style['border-bottom-width'] = `${parentInfo.bottom - cropInfo.bottom}px`;
-    this.border.style['border-left-width'] = `${cropInfo.left - parentInfo.left}px`;
-    this.border.style['border-right-width'] = `${parentInfo.right - cropInfo.right}px`;
+    this.border.style.width = `${this.newWidth}px`;
+    this.border.style.height = `${this.newHeight}px`;
+    this.border.style['border-top-width'] = `${this.newTy}px`;
+    this.border.style['border-bottom-width'] = `${this.pHeight - this.newTy - this.newHeight}px`;
+    this.border.style['border-left-width'] = `${this.newTx}px`;
+    this.border.style['border-right-width'] = `${this.pWidth - this.newTx - this.newWidth}px`;
   }
   // 拖动实现
   drag() {
     this.target.addEventListener("mousedown", (e) => {
       this.getInfo(e)
       const handleMove = (e) => {
-        this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width))
-        this.newTy = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height))
-        this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`
+        this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width));
+        this.newTy = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height));
+        this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`;
         this.calcBorder()
       }
       document.addEventListener("mousemove", handleMove)
@@ -208,10 +200,10 @@ class Crop {
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.width + this.tx))
 
     if(this.options.rate) {
-      if(this.newWidth >= maxHeight) {
-        this.newWidth = maxHeight
+      if(this.newWidth >= maxHeight * this.options.rate) {
+        this.newWidth = maxHeight * this.options.rate
       }
-      this.newHeight = this.newWidth
+      this.newHeight = this.newWidth / this.options.rate
     }
     this.newTx = this.tx + this.width - this.newWidth;
     // 在进行对角缩放时，因为宽高会相互影响，所以需要将偏移的修改放在最后
@@ -225,10 +217,10 @@ class Crop {
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.pWidth - this.tx))
 
     if(this.options.rate) {
-      if(this.newWidth >= this.pHeight - this.ty) {
-        this.newWidth = this.pHeight - this.ty
+      if(this.newWidth >= (this.pHeight - this.ty) * this.options.rate) {
+        this.newWidth = (this.pHeight - this.ty) * this.options.rate
       }
-      this.newHeight = this.newWidth
+      this.newHeight = this.newWidth / this.options.rate
     }
   }
 
@@ -237,10 +229,10 @@ class Crop {
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.height + this.ty))
 
     if (this.options.rate) {
-      if (this.newHeight >= maxWidth) {
-        this.newHeight = maxWidth
+      if (this.newHeight >= maxWidth / this.options.rate) {
+        this.newHeight = maxWidth / this.options.rate
       }
-      this.newWidth = this.newHeight
+      this.newWidth = this.newHeight * this.options.rate
     }
     // 在进行对角缩放时，因为宽高会相互影响，偏移的修改放在 leftZoom 方法中
     if(maxWidth !== this.width + this.tx) {
@@ -253,10 +245,10 @@ class Crop {
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.pHeight - this.ty))
 
     if (this.options.rate) {
-      if (this.newHeight >= maxWidth) {
-        this.newHeight = maxWidth
+      if (this.newHeight >= maxWidth / this.options.rate) {
+        this.newHeight = maxWidth / this.options.rate
       }
-      this.newWidth = this.newHeight
+      this.newWidth = this.newHeight * this.options.rate
     }
   }
 
