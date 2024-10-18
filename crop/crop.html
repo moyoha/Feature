@@ -19,11 +19,12 @@
   </style>
 </head>
 <body>
-  <div>
-    <!-- <img src="https://picsum.photos/200/300" crossorigin="anonymous"> -->
-    <img src="../assets/imgs/2.jpeg" crossorigin="anonymous">
-  </div>
-  <button type="button" id="crop-btn">裁剪</button>
+  <!-- <img src="https://picsum.photos/200/300" crossorigin="anonymous"> -->
+  <img src="../assets/imgs/2.jpeg" crossorigin="anonymous">
+  <button type="button" id="btn-1">八个方向</button>
+  <button type="button" id="crop-btn-1">裁剪八个方向</button>
+  <button type="button" id="btn-2">上下左右</button>
+  <button type="button" id="crop-btn-2">裁剪上下左右</button>
 </body>
 <script>
 class Crop {
@@ -40,54 +41,92 @@ class Crop {
   newTx = 0 // 裁剪元素缩放、移动后在 X 轴上的偏移
   newTy = 0 // 裁剪元素缩放、移动后在 Y 轴上的偏移
   // 配置项 minWidth：缩放的最小宽度，minHeight：缩放最小高度，rate: 宽/高
-  options = { minWidth: 96, minHeight: 96, width: 100, rate: 4/5 }
+  options = { minWidth: 96, minHeight: 96, width: 100, aspectRatio: 4/5,  dragNodes: ['left', 'right', 'top', 'bottom', 'leftTop', 'leftBottom', 'rightTop', 'rightBottom'] }
   target = null // 裁剪元素
   img = null // 图片元素
-  dragNodes = [] // 缩放节点
   pNode = null // 父元素
   border = null // 边框元素 即阴影
-  constructor(img, options = {}, dragNodes = ['left', 'right', 'top', 'bottom', 'leftTop', 'leftBottom', 'rightTop', 'rightBottom']) {
+  constructor(img, options = {}) {
     this.img = img
-    this.pNode = img.parentNode
-    this.pNode.classList.add('crop-container')
-    this.dragNodes = dragNodes
-    this.options = { ...options, ...this.options }
+    this.options = { ...this.options, ...options }
     this.init()
   }
   init(){
-    // 添加裁剪元素
-    const target = document.createElement('div');
-    target.classList.add('crop')
-    target.style.transform = 'translate(0px,0px)';
-    target.style.width = `${this.options.width}px`;
-    if(this.options.rate) {
-      target.style.height = `${this.options.width / this.options.rate}px`;
-    } else {
-      target.style.height = `${this.options.width}px`;
+    if(this.options.aspectRatio) {
+      // 修正最小宽高比
+      this.options.minHeight = this.options.minWidth / this.options.aspectRatio;
     }
-    this.pNode.append(target)
-    this.target = target
-    // 添加阴影
-    const border = document.createElement('div');
-    border.classList.add('crop-border');
-    this.pNode.append(border)
-    this.border = border
-    // 初始化时需获取元素自身信息，避免直接进行裁剪操作时，数据为空
-    this.img.addEventListener('load', () => {
-      this.target.style.display = 'block'
-      this.border.style.display = 'block'
-      // 获取父元素的宽高
-      this.pWidth = this.pNode.clientWidth
-      this.pHeight = this.pNode.clientHeight
-      
-      this.getSelfInfo()
-      this.calcBorder()
-    });
-    this.drag()
-    this.addZoomEl()
-    this.dragNodes.forEach((node) => {
+    this.addParentEl();
+    this.addCropEl();
+    this.addBorderEl();
+    this.addZoomEl();
+    if(this.img.complete) {
+      this.showCrop();
+    } else {
+      this.img.addEventListener('load', () => {
+        this.showCrop();
+      });
+    }
+    this.drag();
+    this.options.dragNodes.forEach((node) => {
       this.zoom(node)
     })
+  }
+  // 添加父元素
+  addParentEl() {
+    this.pNode = document.createElement('div');
+    this.pNode.classList.add('crop-container');
+    this.img.parentNode.append(this.pNode);
+    // 会将 img 移动到 pNode 中，而不是再添加一个 img 元素
+    this.pNode.append(this.img)
+  }
+  // 添加裁剪元素
+  addCropEl() {
+    this.target = document.createElement('div');
+    this.target.classList.add('crop')
+    this.target.style.transform = 'translate(0px,0px)';
+    this.target.style.width = `${this.options.width}px`;
+    if(this.options.aspectRatio) {
+      this.target.style.height = `${this.options.width / this.options.aspectRatio}px`;
+    } else {
+      this.target.style.height = `${this.options.width}px`;
+    }
+    this.pNode.append(this.target);
+  }
+  // 添加阴影
+  addBorderEl() {
+    this.border = document.createElement('div');
+    this.border.classList.add('crop-border');
+    this.pNode.append(this.border);
+  }
+  // 添加缩放时的拖动元素
+  addZoomEl() {
+    const classNames = {
+      left: 'crop-vertical crop-left',
+      right: 'crop-vertical crop-right',
+      top: 'crop-horizontal crop-top',
+      bottom: 'crop-horizontal crop-bottom',
+      leftTop: 'crop-horn crop-leftTop',
+      leftBottom: 'crop-horn crop-leftBottom',
+      rightTop: 'crop-horn crop-rightTop',
+      rightBottom: 'crop-horn crop-rightBottom'
+    }
+    this.options.dragNodes.forEach(node => {
+      this[node] = document.createElement("div")
+      this[node].className = classNames[node]
+      this.target.append(this[node])
+    })
+  }
+
+  showCrop() {
+    this.target.style.display = 'block'
+    this.border.style.display = 'block'
+    // 获取父元素的宽高
+    this.pWidth = this.pNode.clientWidth
+    this.pHeight = this.pNode.clientHeight
+    
+    this.getSelfInfo()
+    this.calcBorder()
   }
   // 获取向上缩放的最大高度
   getMaxHeightToTop() {
@@ -187,7 +226,7 @@ class Crop {
       ctx.drawImage(this.img, this.newTx * rateX, this.newTy * rateY, this.newWidth * rateX, this.newHeight * rateY, 0, 0, this.newWidth * rateX, this.newHeight * rateY)
       canvas.toBlob(blob => {
         if (blob === null) {
-          reject("图片裁剪失败")
+          reject(false)
         } else {
           const url = URL.createObjectURL(blob)
           resolve({blob, url})
@@ -195,34 +234,15 @@ class Crop {
       });
     })
   }
-  // 添加缩放时的拖动元素
-  addZoomEl() {
-    const classNames = {
-      left: 'crop-vertical crop-left',
-      right: 'crop-vertical crop-right',
-      top: 'crop-horizontal crop-top',
-      bottom: 'crop-horizontal crop-bottom',
-      leftTop: 'crop-horn crop-leftTop',
-      leftBottom: 'crop-horn crop-leftBottom',
-      rightTop: 'crop-horn crop-rightTop',
-      rightBottom: 'crop-horn crop-rightBottom'
-    }
-    this.dragNodes.forEach(node => {
-      this[node] = document.createElement("div")
-      this[node].className = classNames[node]
-      this.target.append(this[node])
-    })
-  }
-
   leftZoom(e, isLeftTop = false) {
     const nWidth = this.width + (this.startX - e.clientX)
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.getMaxWidthToLeft()))
     
-    if(this.options.rate) {
-      if(this.newWidth >= this.getMaxHeightToTop() * this.options.rate) {
-        this.newWidth = this.getMaxHeightToTop() * this.options.rate;
+    if(this.options.aspectRatio) {
+      if(this.newWidth >= this.getMaxHeightToTop() * this.options.aspectRatio) {
+        this.newWidth = this.getMaxHeightToTop() * this.options.aspectRatio;
       }
-      this.newHeight = this.newWidth / this.options.rate;
+      this.newHeight = this.newWidth / this.options.aspectRatio;
       this.newTy = this.ty + (this.height - this.newHeight);
     }
     this.newTx = this.tx + this.width - this.newWidth;
@@ -232,11 +252,11 @@ class Crop {
     const nWidth = this.width + (e.clientX - this.startX)
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.getMaxWidthToRight()))
 
-    if(this.options.rate) {
-      if(this.newWidth >= this.getMaxHeightToBottom() * this.options.rate) {
-        this.newWidth = this.getMaxHeightToBottom() * this.options.rate
+    if(this.options.aspectRatio) {
+      if(this.newWidth >= this.getMaxHeightToBottom() * this.options.aspectRatio) {
+        this.newWidth = this.getMaxHeightToBottom() * this.options.aspectRatio
       }
-      this.newHeight = this.newWidth / this.options.rate
+      this.newHeight = this.newWidth / this.options.aspectRatio
     }
   }
 
@@ -244,11 +264,11 @@ class Crop {
     const nHeight = this.height + (this.startY - e.clientY)
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.getMaxHeightToTop()))
 
-    if (this.options.rate) {
-      if (this.newHeight >= this.getMaxWidthToRight() / this.options.rate) {
-        this.newHeight = this.getMaxWidthToRight() / this.options.rate
+    if (this.options.aspectRatio) {
+      if (this.newHeight >= this.getMaxWidthToRight() / this.options.aspectRatio) {
+        this.newHeight = this.getMaxWidthToRight() / this.options.aspectRatio
       }
-      this.newWidth = this.newHeight * this.options.rate
+      this.newWidth = this.newHeight * this.options.aspectRatio
     }
     this.newTy = this.ty + (this.height - this.newHeight);
   }
@@ -257,55 +277,73 @@ class Crop {
     const nHeight = this.height + (e.clientY - this.startY)
     this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.getMaxHeightToBottom()))
 
-    if (this.options.rate) {
-      if (this.newHeight >= this.getMaxWidthToLeft() / this.options.rate) {
-        this.newHeight = this.getMaxWidthToLeft() / this.options.rate
+    if (this.options.aspectRatio) {
+      if (this.newHeight >= this.getMaxWidthToLeft() / this.options.aspectRatio) {
+        this.newHeight = this.getMaxWidthToLeft() / this.options.aspectRatio
       }
-      this.newWidth = this.newHeight * this.options.rate
+      this.newWidth = this.newHeight * this.options.aspectRatio
     }
     this.newTx = this.tx + this.width - this.newWidth;
   }
 
   leftTopZoom(e) {
     this.leftZoom(e)
-    if(!this.options.rate) {
+    if(!this.options.aspectRatio) {
       this.topZoom(e)
     }
   }
 
   leftBottomZoom(e) {
     this.bottomZoom(e)
-    if (!this.options.rate) {
+    if (!this.options.aspectRatio) {
       this.leftZoom(e)
     }
   }
 
   rightTopZoom(e) {
     this.topZoom(e)
-    if(!this.options.rate) {
+    if(!this.options.aspectRatio) {
       this.rightZoom(e)
     }
   }
 
   rightBottomZoom(e) {
     this.rightZoom(e)
-    if (!this.options.rate) {
+    if (!this.options.aspectRatio) {
       this.bottomZoom(e)
     }
   }
 }
 
 const img = document.querySelector('img');
-let cropIns = new Crop(img)
+const btn1 = document.querySelector('#btn-1');
+let cropIns1 = null;
+btn1.addEventListener('click', () => {
+  cropIns1 = new Crop(img);
+});
 
-// 图片裁剪按钮点击
-const cropBtn = document.querySelector('#crop-btn');
-cropBtn.addEventListener('click', async () => {
-  const { blob, url } = await cropIns.crop()
+const btn2 = document.querySelector('#btn-2');
+let cropIns2 = null;
+btn2.addEventListener('click', () => {
+  cropIns2 = new Crop(img, {dragNodes: ['left', 'right', 'top', 'bottom']});
+});
+
+const cropBtn1 = document.querySelector('#crop-btn-1');
+cropBtn1.addEventListener('click', async () => {
+  const { blob, url } = await cropIns1.crop()
   const img = document.createElement('img')
   img.src = url
   document.body.append(img)
 });
+
+const cropBtn2 = document.querySelector('#crop-btn-2');
+cropBtn2.addEventListener('click', async () => {
+  const { blob, url } = await cropIns2.crop()
+  const img = document.createElement('img')
+  img.src = url
+  document.body.append(img)
+});
+
 
 </script>
 </html>
