@@ -1,4 +1,3 @@
-<!-- TODO: Vue 版本 -->
 ## 设计文档
 ### 使用方法
 new Crop(img, options)
