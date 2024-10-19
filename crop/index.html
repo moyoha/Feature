@@ -30,6 +30,7 @@
 </body>
 <script>
 class Crop {
+  static isPhone = /Mobi|Android|iPhone/i.test(navigator.userAgent)
   width = 0 // 裁剪元素宽度
   height = 0 // 裁剪元素高度
   pWidth = 0 // 裁剪父元素宽度
@@ -48,6 +49,11 @@ class Crop {
   img = null // 图片元素
   pNode = null // 父元素
   border = null // 边框元素 即阴影
+  eventTypes = {
+    start: 'mousedown',
+    end: 'mouseup',
+    move: 'mousemove'
+  }
   constructor(img, options = {}) {
     this.img = img
     this.options = { ...this.options, ...options }
@@ -68,6 +74,13 @@ class Crop {
       this.img.addEventListener('load', () => {
         this.showCrop();
       });
+    }
+    if(Crop.isPhone) {
+      this.eventTypes = {
+        start: 'touchstart',
+        end: 'touchend',
+        move: 'touchmove'
+      }
     }
     this.drag();
     this.options.dragNodes.forEach((node) => {
@@ -146,6 +159,12 @@ class Crop {
   getMaxWidthToRight() {
     return this.pWidth - this.tx;
   }
+  getEvent(event) {
+    if(Crop.isPhone) {
+      return event.touches[0];
+    }
+    return event;
+  }
   // 获取裁剪元素的宽高、偏移以及鼠标的起始位置信息
   getInfo(e) {
     this.getSelfInfo()
@@ -183,35 +202,39 @@ class Crop {
   }
   // 拖动实现
   drag() {
-    this.target.addEventListener("mousedown", (e) => {
+    this.target.addEventListener(this.eventTypes.start, (ev) => {
+      const e = this.getEvent(ev);
       this.getInfo(e)
-      const handleMove = (e) => {
+      const handleMove = (ev) => {
+        const e = this.getEvent(ev);
         this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width));
         this.newTy = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height));
         this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`;
         this.calcBorder()
       }
-      document.addEventListener("mousemove", handleMove)
-      document.addEventListener("mouseup", () => {
-        document.removeEventListener("mousemove", handleMove)
+      document.addEventListener(this.eventTypes.move, handleMove)
+      document.addEventListener(this.eventTypes.end, () => {
+        document.removeEventListener(this.eventTypes.move, handleMove)
       })
     })
   }
   // 为拖动元素添加事件
   zoom(node) {
-    this[node].addEventListener("mousedown", (e) => {
-      e.stopPropagation()
+    this[node].addEventListener(this.eventTypes.start, (ev) => {
+      const e = this.getEvent(ev);
+      ev.stopPropagation()
       this.getInfo(e)
-      const handleZoom = (e) => {
+      const handleZoom = (ev) => {
+        const e = this.getEvent(ev);
         this[`${node}Zoom`](e)
         this.target.style.width = `${this.newWidth}px`;
         this.target.style.height = `${this.newHeight}px`;
         this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`;
         this.calcBorder()
       }
-      document.addEventListener("mousemove", handleZoom)
-      document.addEventListener("mouseup", () => {
-        document.removeEventListener("mousemove", handleZoom)
+      document.addEventListener(this.eventTypes.move, handleZoom)
+      document.addEventListener(this.eventTypes.end, () => {
+        document.removeEventListener(this.eventTypes.move, handleZoom)
       })
     })
   }
