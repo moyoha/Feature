@@ -1,4 +1,4 @@
-<!-- TODO: 裁剪——移动端兼容，文档，移除添加父元素，border，crop，Vue 版本，多次调用处理 -->
+<!-- TODO: 裁剪——移动端兼容，文档，Vue 版本 -->
 ## 设计文档
 ### 使用方法
 ### 对角实现说明
@@ -9,6 +9,6 @@
 - 向下缩放的实现同时也是左下方向的实现
 2. 不存在宽高等比缩放时，对角缩放由两个方向合成实现
 ### 配置项说明
-aspectRatio：长宽比
+aspectRatio：长宽比，为 0 时不做宽高限制
 minWidth：最小宽度
 minHeight：最小高度，存在等比缩放时，会对 minHeight 进行矫正，minHeight  = minWidth / aspectRatio

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>图片裁剪</title>
-  <link rel="stylesheet" href="./crop.css">
+  <link rel="stylesheet" href="./index.css">
   <style>
     img {
       min-width: 96px;
@@ -13,14 +13,16 @@
       max-height: 260px;
       -webkit-user-drag: none;
     }
-    .crop-container {
+    .test {
       margin: 20px;
     }
   </style>
 </head>
 <body>
-  <!-- <img src="https://picsum.photos/200/300" crossorigin="anonymous"> -->
-  <img src="../assets/imgs/2.jpeg" crossorigin="anonymous">
+  <div class="test">
+    <!-- <img src="https://picsum.photos/200/300" crossorigin="anonymous"> -->
+    <img src="../assets/imgs/2.jpeg" crossorigin="anonymous">
+  </div>
   <button type="button" id="btn-1">八个方向</button>
   <button type="button" id="crop-btn-1">裁剪八个方向</button>
   <button type="button" id="btn-2">上下左右</button>
@@ -319,13 +321,13 @@ const img = document.querySelector('img');
 const btn1 = document.querySelector('#btn-1');
 let cropIns1 = null;
 btn1.addEventListener('click', () => {
-  cropIns1 = new Crop(img);
+  !cropIns1 && (cropIns1 = new Crop(img));
 });
 
 const btn2 = document.querySelector('#btn-2');
 let cropIns2 = null;
 btn2.addEventListener('click', () => {
-  cropIns2 = new Crop(img, {dragNodes: ['left', 'right', 'top', 'bottom']});
+  !cropIns2 && (cropIns2 = new Crop(img, {aspectRatio: 0, dragNodes: ['left', 'right', 'top', 'bottom']}));
 });
 
 const cropBtn1 = document.querySelector('#crop-btn-1');
