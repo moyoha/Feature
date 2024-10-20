@@ -44,7 +44,7 @@ class Crop {
   newTx = 0 // 裁剪元素缩放、移动后在 X 轴上的偏移
   newTy = 0 // 裁剪元素缩放、移动后在 Y 轴上的偏移
   // 配置项 minWidth：缩放的最小宽度，minHeight：缩放最小高度，rate: 宽/高
-  options = { minWidth: 96, minHeight: 96, width: 100, aspectRatio: 4/5,  dragNodes: ['left', 'right', 'top', 'bottom', 'leftTop', 'leftBottom', 'rightTop', 'rightBottom'] }
+  options = { minWidth: 96, minHeight: 96, width: 100, height: 100, aspectRatio: 4/5,  dragNodes: ['left', 'right', 'top', 'bottom', 'leftTop', 'leftBottom', 'rightTop', 'rightBottom'] }
   target = null // 裁剪元素
   img = null // 图片元素
   pNode = null // 父元素
@@ -104,7 +104,7 @@ class Crop {
     if(this.options.aspectRatio) {
       this.target.style.height = `${this.options.width / this.options.aspectRatio}px`;
     } else {
-      this.target.style.height = `${this.options.width}px`;
+      this.target.style.height = `${this.options.height}px`;
     }
     this.pNode.append(this.target);
   }
@@ -259,7 +259,7 @@ class Crop {
       });
     })
   }
-  leftZoom(e, isLeftTop = false) {
+  leftZoom(e) {
     const nWidth = this.width + (this.startX - e.clientX)
     this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.getMaxWidthToLeft()))
     
