@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rich Text</title>
+  <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+  <div id="richContainer" contenteditable="true">
+    <span id="username" contenteditable="false"></span>
+    <span id="content"></span>
+  </div>
+  <div class="op">
+    <button id="addComment">添加评论</button>
+    <button id="reply">回复评论</button>
+  </div>
+</body>
+<script>
+  addComment.addEventListener('click', () => {
+    focusComment();
+    console.log('addComment');
+  })
+
+  reply.addEventListener('click', () => {
+    username.innerText = '@马永华'
+    console.log('reply');
+  })
+
+  function focusComment() {
+    richContainer.focus();
+  }
+
+  richContainer.addEventListener('focus', (e) => {
+    const selection = getSelection();
+    console.log(selection);
+    console.log(e);
+  })
+
+  richContainer.addEventListener('input', (e) => {
+    const range = new Range();
+    const selection = getSelection();
+    // 若内容编辑区域的元素被删除则重新添加
+    if(selection.anchorNode === richContainer) {
+      e.preventDefault()
+      // recoverContent();
+    }
+    console.log(selection.anchorNode);
+  })
+
+  function recoverContent() {
+    const span = document.createElement('span')
+    span.id = 'content'
+    richContainer.append(span)
+  }
+</script>
+</html>

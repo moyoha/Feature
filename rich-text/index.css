@@ -1,0 +1,18 @@
+#richContainer {
+  box-sizing: border-box;
+  border: 1px solid #5f5f5f;
+  border-radius: 8px;
+  min-height: 40px;
+  width: 200px;
+  line-height: 16px;
+  padding: 11px 6px;
+  /* vertical-align: text-top; */
+}
+.op {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+#username {
+  color: #409EFF;
+}
