@@ -7,18 +7,20 @@
   <link rel="stylesheet" href="./index.css">
 </head>
 <body>
+  <div contenteditable="true" style="border: 1px solid red;"></div>
   <div id="richContainer" contenteditable="true">
-    <span id="username" contenteditable="false"></span>
-    <span id="content"></span>
+    <span id="content"><br></span>
   </div>
+  <!-- <span id="username" contenteditable="false"></span> -->
   <div class="op">
     <button id="addComment">添加评论</button>
     <button id="reply">回复评论</button>
   </div>
 </body>
 <script>
+  let contentEl = null; // 内容编辑区域
+
   addComment.addEventListener('click', () => {
-    focusComment();
     console.log('addComment');
   })
 
@@ -27,31 +29,47 @@
     console.log('reply');
   })
 
-  function focusComment() {
-    richContainer.focus();
-  }
+  // function focusComment() {
+  //   richContainer.focus();
+  // }
 
   richContainer.addEventListener('focus', (e) => {
-    const selection = getSelection();
-    console.log(selection);
-    console.log(e);
+    addContentContainer();
+    // focusComment();
+    // const selection = getSelection();
+    // selection.collapse(contentEl, 0);
+    // console.log(selection);
+    // console.log(e);
   })
 
   richContainer.addEventListener('input', (e) => {
-    const range = new Range();
-    const selection = getSelection();
+    // focusComment();
+    // const range = new Range();
+    // const selection = getSelection();
     // 若内容编辑区域的元素被删除则重新添加
-    if(selection.anchorNode === richContainer) {
-      e.preventDefault()
-      // recoverContent();
-    }
-    console.log(selection.anchorNode);
+    // if(selection.anchorNode === richContainer) {
+    //   e.preventDefault()
+    // }
+    // console.log(selection.anchorNode);
   })
 
-  function recoverContent() {
-    const span = document.createElement('span')
-    span.id = 'content'
-    richContainer.append(span)
+  function focusComment() {
+    const range = new Range();
+    const selection = getSelection();
+    range.setStart(contentEl, 0);
+    range.setEnd(contentEl, 0);
+    console.log(contentEl.lastChild)
+    contentEl.lastChild && selection.collapse(contentEl.lastChild, contentEl.innerText?.length);
+  }
+  function addContentContainer() {
+    contentEl = richContainer.querySelector('#content')
+    console.log({contentEl})
+    if(!contentEl) {
+      // 不能通过该方式添加元素，因为在删除所有元素时，会产生一个 <br> 元素，导致换行
+      // contentEl =  document.createElement('span')
+      // contentEl.id = 'content'
+      richContainer.innerHTML = '<span id="content"><br></span>';
+    }
   }
 </script>
 </html>
