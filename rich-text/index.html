@@ -8,10 +8,10 @@
 </head>
 <body>
   <div id="richContainer" contenteditable="true">
-    <span id="username" contenteditable="false">123</span>
+    <span id="username" contenteditable="false">@123</span>
+    <span id="content"></span>
   </div>
-  <!-- <span id="username" contenteditable="false">123</span>
-  <span id="content"></span> -->
+  <span id="content"></span>
   <!-- <span id="content" contenteditable="plaintext-only"><br></span> -->
   <div class="op">
     <button id="addComment">添加评论</button>
@@ -44,7 +44,9 @@
   })
 
   richContainer.addEventListener('input', (e) => {
-
+    const selection = window.getSelection();
+    richContainer.focus();
+    console.log(selection);
   })
 
   // function focusComment() {

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rich Text2</title>
+  <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+  <div id="richContainer" contenteditable="true">
+    <span id="username" contenteditable="false"></span>
+    <span id="content"></span>
+  </div>
+</body>
+<script>
+  const selection = getSelection();
+  richContainer.addEventListener('beforeinput', (e) => {
+    console.log(e)
+    // e.preventDefault();
+    const range = selection.getRangeAt(0);
+    console.log(range, range.startContainer.nodeType);
+    if(e.inputType === 'insertText') {
+      if(range.startContainer.nodeType === 1) {
+        content.innerText += e.data;
+      }
+    }
+  })
+  richContainer.addEventListener('selectstart', (e) => {
+    console.log(e)
+  })
+  // 组合事件的处理 复制、粘贴、剪切的处理，删除的处理，光标的处理，选择文本后输入处理
+</script>
+</html>
