@@ -4,9 +4,9 @@
   border-radius: 8px;
   min-height: 40px;
   width: 200px;
-  line-height: 16px;
-  padding: 11px 6px;
-  /* vertical-align: text-top; */
+  line-height: 1.2;
+  font-size: 16px;
+  padding: 9px 6px;
 }
 .op {
   margin-top: 20px;
