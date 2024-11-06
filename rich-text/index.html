@@ -3,71 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rich Text</title>
+  <title>Rich Text one</title>
   <link rel="stylesheet" href="./index.css">
 </head>
 <body>
   <div id="richContainer" contenteditable="true">
-    <span id="username" contenteditable="false">@123</span>
-    <span id="content"></span>
+    <span id="content"><br></span>
   </div>
-  <span id="content"></span>
-  <!-- <span id="content" contenteditable="plaintext-only"><br></span> -->
   <div class="op">
-    <button id="addComment">添加评论</button>
+    <button id="submitComment">发布评论</button>
     <button id="reply">回复评论</button>
   </div>
-  <span style="background-color: red;line-height: 20px;"></span>
 </body>
 <script>
-  console.log(richContainer)
-  // const contentEl = content; // 内容编辑区域
+  let contentEl = document.querySelector('#content');
+
   richContainer.addEventListener('beforeinput', (e) => {
-    // e.preventDefault();
-    // console.log(e)
-    // const selection = window.getSelection();
-    // const range = selection.getRangeAt(0);
-  })
-
-
-  addComment.addEventListener('click', () => {
-    console.log('addComment');
+    const selection = getSelection();
+    console.log('beforeinput selection', selection, selection.anchorNode)
+    // 当光标不在 content 容器内时
+    if(selection.anchorNode === richContainer) {
+      validContainer();
+    }
   })
 
   reply.addEventListener('click', () => {
-    username.innerText = '@马永华'
-    console.log('reply');
-  })
-  richContainer.addEventListener('focus', (e) => {
-    // console.log(e)
-    // focusComment();
-  })
-
-  richContainer.addEventListener('input', (e) => {
-    const selection = window.getSelection();
-    richContainer.focus();
-    console.log(selection);
+    const usernameEl = document.querySelector('#username');
+    if(!usernameEl) {
+      const username = document.createElement('span');
+      username.id = 'username';
+      username.contentEditable = 'false';
+      username.innerText = '@123';
+      richContainer.prepend(username);
+    } 
   })
 
-  // function focusComment() {
-  //   const range = new Range();
-  //   const selection = getSelection();
-  //   range.setStart(contentEl, 0);
-  //   range.setEnd(contentEl, 0);
-  //   selection?.addRange(range);
-  //   console.log(contentEl.lastChild);
-  //   contentEl.lastChild && selection.collapse(contentEl.lastChild, contentEl.innerText?.length);
-  // }
-  // function addContentContainer() {
-  //   contentEl = richContainer.querySelector('#content')
-  //   console.log({contentEl})
-  //   if(!contentEl) {
-  //     // 不能通过该方式添加元素，因为在删除所有元素时，会产生一个 <br> 元素，导致换行
-  //     // contentEl =  document.createElement('span')
-  //     // contentEl.id = 'content'
-  //     // richContainer.innerHTML = '<span id="content"><br></span>';
-  //     richContainer.innerHTML = '<span id="content"></span>';
-  //   }
-  // }
+  // 校验评论输入框内的 content 容器和 username 容器是否存在
+  function validContainer() {
+    contentEl = richContainer.querySelector('#content')
+    const usernameEl = richContainer.querySelector('#username')
+    if(usernameEl && !contentEl) {
+      user = usernameEl.innerText;
+      richContainer.innerHTML = `<span id="username" contenteditable="false">${user}</span><span id="content"><br></span>`;
+      focusComment();
+    }
+    if(!contentEl) {
+      richContainer.innerHTML = `<span id="content"><br></span>`;
+      focusComment();
+    }
+  }
+  // 光标设置到评论容器内
+  function focusComment() {
+    contentEl = richContainer.querySelector('#content')
+    const range = new Range();
+    const selection = getSelection();
+    range.setStartAfter(contentEl);
+    range.setEndAfter(contentEl);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
 </script>
 </html>

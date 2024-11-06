@@ -14,5 +14,8 @@
   gap: 10px;
 }
 #username {
-  color: #409EFF;
+  color: #8E8E8E;
+  display: inline-block;
+  /* 不能用 margin-right, 不能用空格 */
+  padding-right: 5px;
 }
