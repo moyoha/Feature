@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="./index.css">
 </head>
 <body>
-  <div id="richContainer" contenteditable="true">
+  <div id="container" contenteditable="true">
     <span id="content"><br></span>
   </div>
   <div class="op">
@@ -18,11 +18,11 @@
 <script>
   let contentEl = document.querySelector('#content');
 
-  richContainer.addEventListener('beforeinput', (e) => {
+  container.addEventListener('beforeinput', (e) => {
     const selection = getSelection();
     console.log('beforeinput selection', selection, selection.anchorNode)
     // 当光标不在 content 容器内时
-    if(selection.anchorNode === richContainer) {
+    if(selection.anchorNode === container) {
       validContainer();
     }
   })
@@ -34,27 +34,27 @@
       username.id = 'username';
       username.contentEditable = 'false';
       username.innerText = '@123';
-      richContainer.prepend(username);
+      container.prepend(username);
     } 
   })
 
   // 校验评论输入框内的 content 容器和 username 容器是否存在
   function validContainer() {
-    contentEl = richContainer.querySelector('#content')
-    const usernameEl = richContainer.querySelector('#username')
+    contentEl = container.querySelector('#content')
+    const usernameEl = container.querySelector('#username')
     if(usernameEl && !contentEl) {
       user = usernameEl.innerText;
-      richContainer.innerHTML = `<span id="username" contenteditable="false">${user}</span><span id="content"><br></span>`;
-      focusComment();
+      container.innerHTML = `<span id="username" contenteditable="false">${user}</span><span id="content"><br></span>`;
+      focusCommentEnd();
     }
     if(!contentEl) {
-      richContainer.innerHTML = `<span id="content"><br></span>`;
-      focusComment();
+      container.innerHTML = `<span id="content"><br></span>`;
+      focusCommentEnd();
     }
   }
-  // 光标设置到评论容器内
-  function focusComment() {
-    contentEl = richContainer.querySelector('#content')
+  // 光标设置到评论容器尾部
+  function focusCommentEnd() {
+    contentEl = container.querySelector('#content')
     const range = new Range();
     const selection = getSelection();
     range.setStartAfter(contentEl);
