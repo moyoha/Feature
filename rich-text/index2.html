@@ -3,54 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rich Text2</title>
+  <title>Rich Text one</title>
   <link rel="stylesheet" href="./index.css">
 </head>
 <body>
-  <div id="richContainer" contenteditable="true">
-    <span id="content"></span>
+  <div id="container" contenteditable="true" style="display: none;"></div>
+  <div class="op">
+    <button id="show">显示输入框</button>
+    <button id="hide">隐藏输入框</button>
+    <button id="submitComment">发布评论</button>
+    <button id="reply">回复评论</button>
   </div>
-  <span id="username" contenteditable="false"></span>
 </body>
 <script>
-  const selection = getSelection();
-  richContainer.addEventListener('beforeinput', (e) => {
-    const range = selection.getRangeAt(0);
-    
-    console.log(e)
-    console.log({selection})
-    e.preventDefault();
-    console.log(range, range.startContainer.nodeType);
-    if(e.inputType === 'insertText') {
-      if(selection.focusNode.nodeType === 3) {
-        const originTextNode = content.firstChild;
-        const textNode = document.createTextNode(e.data);
-        console.log(textNode.length)
-        range.insertNode(textNode);
-        // range.setStartAfter(textNode);
-        // range.setEndAfter(textNode);
-      } else {
-        content.innerText += e.data;
-        range.setStartAfter(content);
-        range.setEndAfter(content);
-      }
-      selection.removeAllRanges();
-      selection.addRange(range);
+  show.addEventListener('click', () => {
+    container.style.display = 'block';
+    focusCommentEnd();
+  })
+
+  hide.addEventListener('click', () => {
+    container.style.display = 'none';
+  })
+
+  submitComment.addEventListener('click', () => {
+    const cloneNode = container.cloneNode(true);
+    const usernameEl = cloneNode.querySelector('#username');
+    if(usernameEl) {
+      usernameEl.remove();
     }
+    const text = cloneNode.innerText;
+    console.log('send', text, text.length)
   })
-  richContainer.addEventListener('selectstart', (e) => {
-    console.log({selection}, 'selectstart')
-    console.log(e)
+
+
+  reply.addEventListener('click', () => {
+    container.style.display = 'block';
+    const usernameEl = document.querySelector('#username');
+    if(!usernameEl) {
+      const username = document.createElement('span');
+      username.id = 'username';
+      username.contentEditable = 'false';
+      username.innerText = '@123';
+      container.prepend(username);
+      focusCommentEnd();
+    } 
   })
-  //   function focusComment() {
-  //   const range = new Range();
-  //   const selection = getSelection();
-  //   range.setStart(contentEl, 0);
-  //   range.setEnd(contentEl, 0);
-  //   selection?.addRange(range);
-  //   console.log(contentEl.lastChild);
-  //   contentEl.lastChild && selection.collapse(contentEl.lastChild, contentEl.innerText?.length);
-  // }
-  // 组合事件的处理 复制、粘贴、剪切的处理，删除的处理，光标的处理，选择文本后输入处理
+  // 光标设置到评论容器尾部
+  function focusCommentEnd() {
+    const range = new Range();
+    const selection = getSelection();
+    range.setStartAfter(container.lastChild);
+    range.setEndAfter(container.lastChild);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
 </script>
 </html>

@@ -41,6 +41,7 @@
 
   reply.addEventListener('click', () => {
     const usernameEl = document.querySelector('#username');
+    container.style.display = 'block';
     if(!usernameEl) {
       const username = document.createElement('span');
       username.id = 'username';
