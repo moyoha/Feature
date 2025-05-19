@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rich Text one</title>
+  <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+  <div id="container" contenteditable="true" style="display: none;">
+    <span id="content"><br></span>
+  </div>
+  <div class="op">
+    <button id="show">显示输入框</button>
+    <button id="hide">隐藏输入框</button>
+    <button id="submitComment">发布评论</button>
+    <button id="reply">回复评论</button>
+  </div>
+</body>
+<script>
+  show.addEventListener('click', () => {
+    container.style.display = 'block';
+    // 不能使用该方式进行聚焦，当有内容时，光标会定位到输入框的头部
+    // container.focus();
+    focusCommentEnd();
+  })
+
+  hide.addEventListener('click', () => {
+    container.style.display = 'none';
+  })
+
+  submitComment.addEventListener('click', () => {
+    const contentEl = container.querySelector('#content')
+    const text = contentEl.innerText;
+    console.log('send', text, text.length)
+  })
+
+  container.addEventListener('beforeinput', (e) => {
+    validContainer();
+  })
+
+  reply.addEventListener('click', () => {
+    const usernameEl = document.querySelector('#username');
+    container.style.display = 'block';
+    if(!usernameEl) {
+      const username = document.createElement('span');
+      username.id = 'username';
+      username.contentEditable = 'false';
+      username.innerText = '@123';
+      container.prepend(username);
+      focusCommentEnd();
+    } 
+  })
+
+  // 校验评论输入框内的 content 容器和 username 容器是否存在
+  function validContainer() {
+    const contentEl = container.querySelector('#content')
+    const usernameEl = container.querySelector('#username')
+    if(usernameEl && !contentEl) {
+      user = usernameEl.innerText;
+      container.innerHTML = `<span id="username" contenteditable="false">${user}</span><span id="content"><br></span>`;
+      return;
+    }
+    if(!contentEl) {
+      container.innerHTML = `<span id="content"><br></span>`;
+    }
+  }
+  // 光标设置到评论容器尾部
+  function focusCommentEnd() {
+    validContainer();
+    const contentEl = container.querySelector('#content')
+    const range = new Range();
+    const selection = getSelection();
+    range.setStartAfter(contentEl);
+    range.setEndAfter(contentEl);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
+</script>
+</html>

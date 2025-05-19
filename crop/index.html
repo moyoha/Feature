@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图片裁剪</title>
+  <link rel="stylesheet" href="./index.css">
+  <style>
+    img {
+      min-width: 96px;
+      min-height: 96px;
+      max-width: 552px;
+      max-height: 260px;
+      -webkit-user-drag: none;
+    }
+    .test {
+      margin: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="test">
+    <!-- <img src="https://picsum.photos/200/300" crossorigin="anonymous"> -->
+    <img src="../assets/imgs/2.jpeg" crossorigin="anonymous">
+  </div>
+  <button type="button" id="btn-1">八个方向</button>
+  <button type="button" id="crop-btn-1">裁剪八个方向</button>
+  <button type="button" id="btn-2">上下左右</button>
+  <button type="button" id="crop-btn-2">裁剪上下左右</button>
+</body>
+<script>
+class Crop {
+  static isPhone = /Mobi|Android|iPhone/i.test(navigator.userAgent)
+  width = 0 // 裁剪元素宽度
+  height = 0 // 裁剪元素高度
+  pWidth = 0 // 裁剪父元素宽度
+  pHeight = 0 // 裁剪父元素高度
+  newWidth = 0 // 裁剪元素缩放后的宽度
+  newHeight = 0 // 裁剪元素缩放后的高度
+  startX = 0 // 鼠标起始位置的 X 坐标
+  startY = 0 // 鼠标起始位置的 Y 坐标
+  tx = 0 // 裁剪元素在 X 轴上的初始偏移
+  ty = 0 // 裁剪元素在 Y 轴上的初始偏移
+  newTx = 0 // 裁剪元素缩放、移动后在 X 轴上的偏移
+  newTy = 0 // 裁剪元素缩放、移动后在 Y 轴上的偏移
+  // 配置项 minWidth：缩放的最小宽度，minHeight：缩放最小高度，rate: 宽/高
+  options = { minWidth: 96, minHeight: 96, width: 100, height: 100, aspectRatio: 4/5,  dragNodes: ['left', 'right', 'top', 'bottom', 'leftTop', 'leftBottom', 'rightTop', 'rightBottom'] }
+  target = null // 裁剪元素
+  img = null // 图片元素
+  pNode = null // 父元素
+  border = null // 边框元素 即阴影
+  eventTypes = {
+    start: 'mousedown',
+    end: 'mouseup',
+    move: 'mousemove'
+  }
+  constructor(img, options = {}) {
+    this.img = img
+    this.options = { ...this.options, ...options }
+    this.init()
+  }
+  init(){
+    if(this.options.aspectRatio) {
+      // 修正最小宽高比
+      this.options.minHeight = this.options.minWidth / this.options.aspectRatio;
+    }
+    this.addParentEl();
+    this.addCropEl();
+    this.addBorderEl();
+    this.addZoomEl();
+    if(this.img.complete) {
+      this.showCrop();
+    } else {
+      this.img.addEventListener('load', () => {
+        this.showCrop();
+      });
+    }
+    if(Crop.isPhone) {
+      this.eventTypes = {
+        start: 'touchstart',
+        end: 'touchend',
+        move: 'touchmove'
+      }
+    }
+    this.drag();
+    this.options.dragNodes.forEach((node) => {
+      this.zoom(node)
+    })
+  }
+  // 添加父元素
+  addParentEl() {
+    this.pNode = document.createElement('div');
+    this.pNode.classList.add('crop-container');
+    this.img.parentNode.append(this.pNode);
+    // 会将 img 移动到 pNode 中，而不是再添加一个 img 元素
+    this.pNode.append(this.img)
+  }
+  // 添加裁剪元素
+  addCropEl() {
+    this.target = document.createElement('div');
+    this.target.classList.add('crop')
+    this.target.style.transform = 'translate(0px,0px)';
+    this.target.style.width = `${this.options.width}px`;
+    if(this.options.aspectRatio) {
+      this.target.style.height = `${this.options.width / this.options.aspectRatio}px`;
+    } else {
+      this.target.style.height = `${this.options.height}px`;
+    }
+    this.pNode.append(this.target);
+  }
+  // 添加阴影
+  addBorderEl() {
+    this.border = document.createElement('div');
+    this.border.classList.add('crop-border');
+    this.pNode.append(this.border);
+  }
+  // 添加缩放时的拖动元素
+  addZoomEl() {
+    const classNames = {
+      left: 'crop-vertical crop-left',
+      right: 'crop-vertical crop-right',
+      top: 'crop-horizontal crop-top',
+      bottom: 'crop-horizontal crop-bottom',
+      leftTop: 'crop-horn crop-leftTop',
+      leftBottom: 'crop-horn crop-leftBottom',
+      rightTop: 'crop-horn crop-rightTop',
+      rightBottom: 'crop-horn crop-rightBottom'
+    }
+    this.options.dragNodes.forEach(node => {
+      this[node] = document.createElement("div")
+      this[node].className = classNames[node]
+      this.target.append(this[node])
+    })
+  }
+
+  showCrop() {
+    this.target.style.display = 'block'
+    this.border.style.display = 'block'
+    // 获取父元素的宽高
+    this.pWidth = this.pNode.clientWidth
+    this.pHeight = this.pNode.clientHeight
+    
+    this.getSelfInfo()
+    this.calcBorder()
+  }
+  // 获取向上缩放的最大高度
+  getMaxHeightToTop() {
+    return this.height + this.ty;
+  }
+  // 获取向下缩放的最大高度
+  getMaxHeightToBottom() {
+    return this.pHeight - this.ty;
+  }
+  // 获取向左缩放的最大宽度
+  getMaxWidthToLeft() {
+    return this.width + this.tx;
+  }
+  // 获取向右缩放的最大宽度
+  getMaxWidthToRight() {
+    return this.pWidth - this.tx;
+  }
+  getEvent(event) {
+    if(Crop.isPhone) {
+      return event.touches[0];
+    }
+    return event;
+  }
+  // 获取裁剪元素的宽高、偏移以及鼠标的起始位置信息
+  getInfo(e) {
+    this.getSelfInfo()
+
+    this.startX = e.clientX
+    this.startY = e.clientY
+  }
+  // 获取裁剪元素的宽高、偏移
+  getSelfInfo() {
+    this.newWidth = this.width = this.target.offsetWidth;
+    this.newHeight = this.height = this.target.offsetHeight;
+
+    const translateDistance = this.getTranslateDistance()
+    this.newTx = this.tx = translateDistance.x;
+    this.newTy = this.ty = translateDistance.y;
+  }
+  // 获取裁剪元素当前的的偏移数据
+  getTranslateDistance() {
+    let translateStr = this.target.style.transform;
+    const reg = /-?\d+(\.\d+)?/g;
+    let translateArr = translateStr.match(reg);
+
+    return {
+      x: +translateArr[0],
+      y: +translateArr[1]
+    }
+  }
+  calcBorder() {
+    this.border.style.width = `${this.newWidth}px`;
+    this.border.style.height = `${this.newHeight}px`;
+    this.border.style['border-top-width'] = `${this.newTy}px`;
+    this.border.style['border-bottom-width'] = `${this.pHeight - this.newTy - this.newHeight}px`;
+    this.border.style['border-left-width'] = `${this.newTx}px`;
+    this.border.style['border-right-width'] = `${this.pWidth - this.newTx - this.newWidth}px`;
+  }
+  // 拖动实现
+  drag() {
+    this.target.addEventListener(this.eventTypes.start, (ev) => {
+      const e = this.getEvent(ev);
+      this.getInfo(e)
+      const handleMove = (ev) => {
+        const e = this.getEvent(ev);
+        this.newTx = Math.max(0, Math.min(this.tx + e.clientX - this.startX, this.pWidth - this.width));
+        this.newTy = Math.max(0, Math.min(this.ty + e.clientY - this.startY, this.pHeight - this.height));
+        this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`;
+        this.calcBorder()
+      }
+      document.addEventListener(this.eventTypes.move, handleMove)
+      document.addEventListener(this.eventTypes.end, () => {
+        document.removeEventListener(this.eventTypes.move, handleMove)
+      })
+    })
+  }
+  // 为拖动元素添加事件
+  zoom(node) {
+    this[node].addEventListener(this.eventTypes.start, (ev) => {
+      const e = this.getEvent(ev);
+      ev.stopPropagation()
+      this.getInfo(e)
+      const handleZoom = (ev) => {
+        const e = this.getEvent(ev);
+        this[`${node}Zoom`](e)
+        this.target.style.width = `${this.newWidth}px`;
+        this.target.style.height = `${this.newHeight}px`;
+        this.target.style.transform = `translate(${this.newTx}px, ${this.newTy}px)`;
+        this.calcBorder()
+      }
+      document.addEventListener(this.eventTypes.move, handleZoom)
+      document.addEventListener(this.eventTypes.end, () => {
+        document.removeEventListener(this.eventTypes.move, handleZoom)
+      })
+    })
+  }
+  // 裁剪
+  crop() {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement("canvas")
+      const { naturalWidth, naturalHeight, width, height } = this.img;
+      const rateX = +(naturalWidth / width).toFixed(1);
+      const rateY = +(naturalHeight / height).toFixed(1);
+      canvas.width = this.newWidth * rateX
+      canvas.height = this.newHeight * rateY
+      const ctx = canvas.getContext("2d")
+      ctx.drawImage(this.img, this.newTx * rateX, this.newTy * rateY, this.newWidth * rateX, this.newHeight * rateY, 0, 0, this.newWidth * rateX, this.newHeight * rateY)
+      canvas.toBlob(blob => {
+        if (blob === null) {
+          reject(false)
+        } else {
+          const url = URL.createObjectURL(blob)
+          resolve({blob, url})
+        }
+      });
+    })
+  }
+  leftZoom(e) {
+    const nWidth = this.width + (this.startX - e.clientX)
+    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.getMaxWidthToLeft()))
+    
+    if(this.options.aspectRatio) {
+      if(this.newWidth >= this.getMaxHeightToTop() * this.options.aspectRatio) {
+        this.newWidth = this.getMaxHeightToTop() * this.options.aspectRatio;
+      }
+      this.newHeight = this.newWidth / this.options.aspectRatio;
+      this.newTy = this.ty + (this.height - this.newHeight);
+    }
+    this.newTx = this.tx + this.width - this.newWidth;
+  }
+
+  rightZoom(e) {
+    const nWidth = this.width + (e.clientX - this.startX)
+    this.newWidth = Math.max(this.options.minWidth, Math.min(nWidth, this.getMaxWidthToRight()))
+
+    if(this.options.aspectRatio) {
+      if(this.newWidth >= this.getMaxHeightToBottom() * this.options.aspectRatio) {
+        this.newWidth = this.getMaxHeightToBottom() * this.options.aspectRatio
+      }
+      this.newHeight = this.newWidth / this.options.aspectRatio
+    }
+  }
+
+  topZoom(e) {
+    const nHeight = this.height + (this.startY - e.clientY)
+    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.getMaxHeightToTop()))
+
+    if (this.options.aspectRatio) {
+      if (this.newHeight >= this.getMaxWidthToRight() / this.options.aspectRatio) {
+        this.newHeight = this.getMaxWidthToRight() / this.options.aspectRatio
+      }
+      this.newWidth = this.newHeight * this.options.aspectRatio
+    }
+    this.newTy = this.ty + (this.height - this.newHeight);
+  }
+
+  bottomZoom(e) {
+    const nHeight = this.height + (e.clientY - this.startY)
+    this.newHeight = Math.max(this.options.minHeight, Math.min(nHeight, this.getMaxHeightToBottom()))
+
+    if (this.options.aspectRatio) {
+      if (this.newHeight >= this.getMaxWidthToLeft() / this.options.aspectRatio) {
+        this.newHeight = this.getMaxWidthToLeft() / this.options.aspectRatio
+      }
+      this.newWidth = this.newHeight * this.options.aspectRatio
+    }
+    this.newTx = this.tx + this.width - this.newWidth;
+  }
+
+  leftTopZoom(e) {
+    this.leftZoom(e)
+    if(!this.options.aspectRatio) {
+      this.topZoom(e)
+    }
+  }
+
+  leftBottomZoom(e) {
+    this.bottomZoom(e)
+    if (!this.options.aspectRatio) {
+      this.leftZoom(e)
+    }
+  }
+
+  rightTopZoom(e) {
+    this.topZoom(e)
+    if(!this.options.aspectRatio) {
+      this.rightZoom(e)
+    }
+  }
+
+  rightBottomZoom(e) {
+    this.rightZoom(e)
+    if (!this.options.aspectRatio) {
+      this.bottomZoom(e)
+    }
+  }
+}
+
+const img = document.querySelector('img');
+const btn1 = document.querySelector('#btn-1');
+let cropIns1 = null;
+btn1.addEventListener('click', () => {
+  !cropIns1 && (cropIns1 = new Crop(img));
+});
+
+const btn2 = document.querySelector('#btn-2');
+let cropIns2 = null;
+btn2.addEventListener('click', () => {
+  !cropIns2 && (cropIns2 = new Crop(img, {aspectRatio: 0, dragNodes: ['left', 'right', 'top', 'bottom']}));
+});
+
+const cropBtn1 = document.querySelector('#crop-btn-1');
+cropBtn1.addEventListener('click', async () => {
+  const { blob, url } = await cropIns1.crop()
+  const img = document.createElement('img')
+  img.src = url
+  document.body.append(img)
+});
+
+const cropBtn2 = document.querySelector('#crop-btn-2');
+cropBtn2.addEventListener('click', async () => {
+  const { blob, url } = await cropIns2.crop()
+  const img = document.createElement('img')
+  img.src = url
+  document.body.append(img)
+});
+
+
+</script>
+</html>

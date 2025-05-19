@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rich Text one</title>
+  <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+  <div id="container" contenteditable="true" style="display: none;"></div>
+  <div class="op">
+    <button id="show">显示输入框</button>
+    <button id="hide">隐藏输入框</button>
+    <button id="submitComment">发布评论</button>
+    <button id="reply">回复评论</button>
+  </div>
+</body>
+<script>
+  show.addEventListener('click', () => {
+    container.style.display = 'block';
+    focusCommentEnd();
+  })
+
+  hide.addEventListener('click', () => {
+    container.style.display = 'none';
+  })
+
+  submitComment.addEventListener('click', () => {
+    const cloneNode = container.cloneNode(true);
+    const usernameEl = cloneNode.querySelector('#username');
+    if(usernameEl) {
+      usernameEl.remove();
+    }
+    const text = cloneNode.innerText;
+    console.log('send', text, text.length)
+  })
+
+
+  reply.addEventListener('click', () => {
+    container.style.display = 'block';
+    const usernameEl = document.querySelector('#username');
+    if(!usernameEl) {
+      const username = document.createElement('span');
+      username.id = 'username';
+      username.contentEditable = 'false';
+      username.innerText = '@123';
+      container.prepend(username);
+      focusCommentEnd();
+    } 
+  })
+  // 光标设置到评论容器尾部
+  function focusCommentEnd() {
+    const range = new Range();
+    const selection = getSelection();
+    range.setStartAfter(container.lastChild);
+    range.setEndAfter(container.lastChild);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
+</script>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>判断 iframe 是否被点击</title>
+</head>
+<body>
+    <iframe src="https://juejin.cn/" frameborder="0" width="300" height="250"></iframe>
+    <iframe src="https://bjsvp35.space/?portal=1135" frameborder="0" width="300" height="250"></iframe>
+    <button id="stopBtn">stop</button>
+</body>
+<script>
+    class WatchIframeClick {
+        iframes = [];
+        timer = null;
+        constructor(options = { frequency: 500 }) {
+            this.options = options;
+            this.watch();
+        }
+        add(iframe, cb) {
+            this.iframes.push({
+                element: iframe,
+                cb
+            });
+        }
+        watch() {
+            if(this.timer) { 
+                return;
+            }
+            this.timer = setInterval(() => {
+                this.clickedHook();
+            }, this.options.frequency)
+        }
+        unwatch() {
+            clearInterval(this.timer)
+        }
+        clickedHook() {
+            const activeElement = document.activeElement;
+            if (!activeElement) { return; }
+            for (let iframe of this.iframes) {
+                if (activeElement === iframe.element) {
+                    iframe.cb?.();
+                    iframe.element.blur();
+                    break;
+                }
+            }
+        }
+    }
+
+    const iframeEls = document.querySelectorAll('iframe');
+    const ins = new WatchIframeClick();
+    for (let iframe of iframeEls) {
+        ins.add(iframe,() => {
+            console.log('iframe 被点击了')
+        })
+    }
+    // stop 是一个全局函数
+    stopBtn.addEventListener('click', () => {
+      ins.unwatch()
+    })
+</script>
+</html>
